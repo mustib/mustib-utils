@@ -1,0 +1,64 @@
+{
+  "root": true,
+  "env": { "node": true },
+  "extends": [
+    "eslint:recommended",
+    "airbnb-base",
+    "airbnb-typescript/base",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
+    "prettier",
+    "plugin:prettier/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/eslint-recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": { "project": ["./tsconfig.json"] },
+  "plugins": ["@typescript-eslint", "prettier"],
+  "rules": {
+    "import/order": [
+      "error",
+      {
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index",
+          "object",
+          "type"
+        ]
+      }
+    ],
+    "prettier/prettier": [
+      "off",
+      {
+        "endOfLine": "auto"
+      }
+    ],
+    "no-underscore-dangle": "off",
+    "import/no-unresolved": "off",
+    "no-await-in-loop": "off",
+    "no-continue": "off",
+    "no-param-reassign": "off",
+    "no-plusplus": "off",
+    "no-restricted-syntax": "off",
+    "class-methods-use-this": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/naming-convention": "off",
+    "@typescript-eslint/no-use-before-define": ["error", "nofunc"],
+    "import/prefer-default-export": "off",
+    "import/newline-after-import": ["error", { "count": 1 }],
+    "arrow-body-style": "off",
+    "prefer-arrow-callback": "off",
+    "@typescript-eslint/strict-boolean-expressions": [
+      2,
+      {
+        "allowString": false,
+        "allowNumber": false,
+        "allowNullableBoolean": true
+      }
+    ]
+  }
+}
