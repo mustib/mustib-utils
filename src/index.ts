@@ -1,5 +1,7 @@
+export * from './AppError/index.js'
 export * from './capitalize.js'
 export * from './getTypeof.js'
 export * from './mergeTwoObjects.js'
-export type * from './parseJson.js'
+export * from './parseJson.js'
+export * from './TypedEventEmitter.js'
 export type * from './types.js'
