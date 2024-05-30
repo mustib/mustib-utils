@@ -1,0 +1,1 @@
+export type UntypedObject = Record<string, any>
