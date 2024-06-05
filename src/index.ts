@@ -1,5 +1,6 @@
 export * from './AppError/index.js'
 export * from './capitalize.js'
+export * from './EnvVars.js'
 export * from './getDirname.js'
 export * from './getTypeof.js'
 export * from './mergeTwoObjects.js'
