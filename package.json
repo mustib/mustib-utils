@@ -1,6 +1,6 @@
 {
   "name": "@mustib/utils",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "a lightweight npm library that provides a collection of commonly used utilities. Whether you’re working on web applications, APIs, or backend services, these tools simplify repetitive tasks and enhance productivity",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -13,7 +13,8 @@
     "lint": "eslint . --ext .js,.ts",
     "prebuild": "npm run lint && rimraf ./dist",
     "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "postbuild": "node ./copyTsconfig.js"
   },
   "files": [
     "./dist",

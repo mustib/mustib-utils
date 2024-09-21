@@ -1,3 +1,3 @@
-export type UntypedObject = Record<string, any>
+export type UntypedObject = Record<string, any>;
 
-export type Func = (...args: any[]) => any
+export type Func = (...args: any[]) => any;
