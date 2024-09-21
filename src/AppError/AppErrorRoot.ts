@@ -4,16 +4,19 @@ import { AbstractAppError } from './AbstractAppError.js';
 
 import { AppError } from './AppError.js';
 
+import type { AppErrorRootOptions } from './types.js';
 
-export class AppErrorRoot<AppErrorTypes extends string> extends AbstractAppError {
-  length = 0;
-
-  errors: Record<string, AppError<AppErrorTypes>> = {};
-
+export class AppErrorRoot<AppErrorTypes extends string>
+  extends AbstractAppError
+  implements Pick<AppErrorRootOptions, 'appErrorOptions'>
+{
   static aggregate<AppErrorTypes extends string>(
-    aggregateFunc: (tryCatch: AppErrorRoot<AppErrorTypes>['tryCatch']) => void | Promise<void>
+    aggregateFunc: (
+      tryCatch: AppErrorRoot<AppErrorTypes>['tryCatch'],
+    ) => void | Promise<void>,
+    options?: AppErrorRootOptions,
   ) {
-    const appErrorRoot = new AppErrorRoot();
+    const appErrorRoot = new AppErrorRoot(options);
 
     const catchError = (error: unknown) => {
       if (getTypeof(error) === 'object') {
@@ -26,12 +29,12 @@ export class AppErrorRoot<AppErrorTypes extends string> extends AbstractAppError
       if (aggregateFunc.constructor.name === 'AsyncFunction')
         return (
           aggregateFunc(
-            appErrorRoot.tryCatch.bind(appErrorRoot)
-          ) as Promise<any>
+            appErrorRoot.tryCatch.bind(appErrorRoot),
+          ) as Promise<never>
         )
           .catch(catchError)
           .finally(() => {
-            appErrorRoot.end(AppErrorRoot.aggregate);
+            appErrorRoot.end();
           });
 
       aggregateFunc(appErrorRoot.tryCatch.bind(appErrorRoot));
@@ -39,43 +42,68 @@ export class AppErrorRoot<AppErrorTypes extends string> extends AbstractAppError
       catchError(error);
     }
 
-    appErrorRoot.end(AppErrorRoot.aggregate);
-
-    return undefined;
+    return appErrorRoot.end();
   }
 
-  push(type: AppErrorTypes, error: string | string[]) {
+  length = 0;
+
+  errors: Record<string, AppError<AppErrorTypes>> = {};
+
+  appErrorOptions;
+
+  constructor({ appErrorOptions, ...options } = {} as AppErrorRootOptions) {
+    super(options);
+    this.appErrorOptions = appErrorOptions;
+  }
+
+  push(
+    type: AppErrorTypes,
+    error: string | string[],
+    { appErrorOptions } = {
+      appErrorOptions: this.appErrorOptions,
+    } as AppErrorRootOptions,
+  ) {
     if (type in this.errors) {
-      this.errors[type].push(error);
+      this.errors[type].push(error, appErrorOptions);
       return this;
     }
     const appError = new AppError(type);
-    appError.push(error);
+    appError.push(error, appErrorOptions);
     this.errors[type] = appError;
     this.length++;
     return this;
   }
 
-  protected pushRoot(appErrorRoot: AppErrorRoot<AppErrorTypes>) {
+  protected pushRoot(
+    appErrorRoot: AppErrorRoot<AppErrorTypes>,
+    options?: AppErrorRootOptions,
+  ) {
     const appErrorRootEntries = Object.entries(appErrorRoot.errors);
 
     appErrorRootEntries.forEach(([errType, error]) => {
-      this.push(errType as AppErrorTypes, error.errors);
+      this.push(errType as AppErrorTypes, error.errors, options);
     });
   }
 
-  toString(indentation = 4) {
+  toString() {
     const errorsString = Object.values(this.errors)
-      .map((error) => error.toString(indentation))
+      .map((error) => {
+        error.indentation = this.indentation;
+        return error.toString();
+      })
       .join('\n');
 
-    return errorsString;
+    return [this.prepend, errorsString, this.append].join('\n');
   }
 
-  tryCatch(tryCatchFunc: () => void | Promise<void>) {
+  tryCatch(
+    tryCatchFunc: () => void | Promise<void>,
+    options?: AppErrorRootOptions,
+  ) {
     const catchError = (error: unknown) => {
-      if (error instanceof AppError) this.push(error.type, error.errors);
-      else if (error instanceof AppErrorRoot) this.pushRoot(error);
+      if (error instanceof AppError)
+        this.push(error.type, error.errors, options);
+      else if (error instanceof AppErrorRoot) this.pushRoot(error, options);
       else {
         if (getTypeof(error) === 'object') {
           Error.captureStackTrace(error as object, this.tryCatch);
@@ -96,4 +124,3 @@ export class AppErrorRoot<AppErrorTypes extends string> extends AbstractAppError
     return undefined;
   }
 }
-
