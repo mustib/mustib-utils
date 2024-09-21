@@ -2,11 +2,7 @@ import { existsSync } from 'fs';
 
 import { parse } from 'dotenv';
 
-import { getTypeof } from './getTypeof.js';
-
-import { AppError } from './AppError.js';
-
-import type { Func, UntypedObject } from 'types.js';
+import { getTypeof, AppError, type Func, type UntypedObject } from '../common';
 
 type ParseAsString = 'date' | 'string' | 'number' | 'bool';
 

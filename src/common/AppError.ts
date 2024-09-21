@@ -1,6 +1,6 @@
-import { capitalize } from './capitalize.js';
+import { capitalize } from './capitalize';
 
-import type { Func } from './types.js';
+import type { Func } from './types';
 
 export type ErrorOptions = {
   indentation?: number;

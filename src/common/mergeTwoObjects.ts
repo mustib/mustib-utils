@@ -1,14 +1,17 @@
-import { getTypeof } from "./getTypeof.js";
+import { getTypeof } from './getTypeof';
 
-import type { UntypedObject } from "types.js";
+import type { UntypedObject } from './types';
 
-type MergeObjects<Target, Source> = Target extends Array<any>
-  ? Source
-  : Source extends Array<any>
-  ? Source
-  : Target extends UntypedObject ? Source extends UntypedObject
-  ? Target & Source : Source
-  : Source;
+type MergeObjects<Target, Source> =
+  Target extends Array<any>
+    ? Source
+    : Source extends Array<any>
+      ? Source
+      : Target extends UntypedObject
+        ? Source extends UntypedObject
+          ? Target & Source
+          : Source
+        : Source;
 
 function isObject(v: any): v is UntypedObject {
   return getTypeof(v) === 'object';
@@ -16,18 +19,14 @@ function isObject(v: any): v is UntypedObject {
 
 function _mergeTwoObjects<
   Target extends UntypedObject,
-  Source extends UntypedObject
+  Source extends UntypedObject,
 >(target: Target, source: Source) {
   const sourceEntries = Object.entries(source) as [keyof Target, any][];
 
   const merged = target;
 
   sourceEntries.forEach(([key, value]) => {
-    if (
-      !(key in target) ||
-      !isObject(value) ||
-      !isObject(target[key])
-    ) {
+    if (!(key in target) || !isObject(value) || !isObject(target[key])) {
       merged[key] = value;
       return;
     }
@@ -45,19 +44,17 @@ function _mergeTwoObjects<
  * @param {boolean} [shouldMutateTarget=false] - A boolean indicating whether to create a new object or mutate the target object (defaults to false).
  * @returns {MergeObjects<Target, Source>} - The merged object, or the source object if either the target or source is not an object.
  */
-export function mergeTwoObjects<
-  Target,
-  Source
->(target: Target, source: Source, shouldMutateTarget = false): MergeObjects<Target, Source> {
-  if (
-    !isObject(target) ||
-    !isObject(source)
-  ) {
+export function mergeTwoObjects<Target, Source>(
+  target: Target,
+  source: Source,
+  shouldMutateTarget = false,
+): MergeObjects<Target, Source> {
+  if (!isObject(target) || !isObject(source)) {
     return source as never;
   }
 
   return _mergeTwoObjects(
     shouldMutateTarget ? target : structuredClone(target),
-    source
+    source,
   ) as never;
 }

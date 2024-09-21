@@ -1,4 +1,4 @@
-import { AppError } from './AppError.js';
+import { AppError } from './AppError';
 
 type Options = { separator?: string };
 type TimeUnit = `${number}${keyof typeof timeUnits}`;
