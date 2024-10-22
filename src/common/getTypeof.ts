@@ -1,4 +1,3 @@
-
 /**
  *  an extension of the native typeof which determines the real type of the values that typeof lacks
  *
@@ -24,7 +23,8 @@ export function getTypeof(value: any) {
     type === 'string' ||
     type === 'boolean' ||
     type === 'undefined' ||
-    type === 'function'
+    type === 'function' ||
+    type === 'symbol'
   ) {
     return type;
   }
