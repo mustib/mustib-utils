@@ -1,5 +1,4 @@
 import { defineConfig } from 'rollup';
-import terser from '@rollup/plugin-terser';
 import typescript from '@rollup/plugin-typescript';
 import dts from 'rollup-plugin-dts';
 
@@ -27,7 +26,7 @@ function generateModuleConfig(input) {
           sourcemap: true,
         },
       ],
-      plugins: [typescript(), terser({ keep_classnames: true })],
+      plugins: [typescript()],
     },
     {
       input,
