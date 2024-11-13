@@ -5,11 +5,12 @@ export function getElementBoundaries(element: HTMLElement) {
     top: elementTop,
     bottom,
     left: elementLeft,
-    right: elementRight,
+    right,
     width,
     height,
   } = element.getBoundingClientRect();
 
+  const elementRight = innerWidth - right;
   const elementBottom = innerHeight - bottom;
 
   const isTopInPage = elementTop >= 0 && elementTop <= innerHeight;
