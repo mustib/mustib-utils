@@ -1,6 +1,4 @@
 export function getElementBoundaries(element: HTMLElement) {
-  const { innerHeight, innerWidth } = window;
-
   const {
     top: elementTop,
     bottom,
@@ -10,13 +8,16 @@ export function getElementBoundaries(element: HTMLElement) {
     height,
   } = element.getBoundingClientRect();
 
-  const elementRight = innerWidth - right;
-  const elementBottom = innerHeight - bottom;
+  const pageWidth = document.documentElement.clientWidth;
+  const pageHeight = document.documentElement.clientHeight;
 
-  const isTopInPage = elementTop >= 0 && elementTop <= innerHeight;
-  const isBottomInPage = elementBottom >= 0 && elementBottom <= innerHeight;
-  const isLeftInPage = elementLeft >= 0 && elementLeft <= innerWidth;
-  const isRightInPage = elementRight >= 0 && elementRight <= innerWidth;
+  const elementRight = pageWidth - right;
+  const elementBottom = pageHeight - bottom;
+
+  const isTopInPage = elementTop >= 0 && elementTop <= pageHeight;
+  const isBottomInPage = elementBottom >= 0 && elementBottom <= pageHeight;
+  const isLeftInPage = elementLeft >= 0 && elementLeft <= pageWidth;
+  const isRightInPage = elementRight >= 0 && elementRight <= pageWidth;
 
   const isTopVisible = isTopInPage && (isLeftInPage || isRightInPage);
   const isTopFullyVisible = isTopInPage && isLeftInPage && isRightInPage;
