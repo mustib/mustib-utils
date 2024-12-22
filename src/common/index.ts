@@ -4,5 +4,6 @@ export * from './CustomEventEmitter';
 export * from './getTypeof';
 export * from './mergeTwoObjects';
 export * from './millisecondsFromString';
+export * from './stringFromMilliseconds';
 export * from './parseJson';
 export type * from './types';
