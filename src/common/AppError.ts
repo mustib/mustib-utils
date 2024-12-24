@@ -2,18 +2,24 @@ import { capitalize } from './capitalize';
 
 import type { Func } from './types';
 
+export type ErrorScope = (string | symbol)[] | undefined;
+
 export type ErrorOptions = {
   indentation?: number;
   stackTraceConstructor?: Func;
 };
 
+export type PushOptions = { scope?: ErrorScope };
+
 export class AppError<ErrorTypes extends Capitalize<string>> extends Error {
   static throw<ErrorTypes extends Capitalize<string>>(
     type: ErrorTypes,
     error: string | string[],
-    options?: ErrorOptions,
+    options?: ErrorOptions & { pushOptions?: PushOptions },
   ) {
-    return new AppError<ErrorTypes>(options).push(type, error).throw();
+    return new AppError<ErrorTypes>(options)
+      .push(type, error, options?.pushOptions)
+      .throw();
   }
 
   static aggregate<ErrorTypes extends Capitalize<string>>(
@@ -24,19 +30,28 @@ export class AppError<ErrorTypes extends Capitalize<string>> extends Error {
   ) {
     const appError = new AppError(options);
 
-    return Promise.resolve(aggregateFunc(appError))
-      .then(appError.end.bind(appError))
-      .catch((error: unknown) => {
+    return new Promise((resolve, reject) => {
+      try {
+        aggregateFunc(appError);
+        appError.end();
+        resolve(undefined);
+      } catch (error) {
         if (error instanceof Error) {
-          Error.captureStackTrace(error, AppError.aggregate);
+          Error.captureStackTrace(
+            error,
+            options?.stackTraceConstructor ?? AppError.aggregate,
+          );
         }
-        throw error;
-      });
+        reject(error);
+      }
+    });
   }
 
   protected length = 0;
 
-  protected errors = {} as { [key in ErrorTypes]?: string[] };
+  protected errors = {} as {
+    [key in ErrorTypes]?: { message: string; scope?: ErrorScope }[];
+  };
 
   get message() {
     return this.toString();
@@ -47,10 +62,19 @@ export class AppError<ErrorTypes extends Capitalize<string>> extends Error {
   }
 
   catch(catchFunc: () => void) {
-    return Promise.resolve(catchFunc()).catch((error: unknown) => {
+    return new Promise((resolve, reject) => {
+      try {
+        resolve(catchFunc());
+      } catch (error: unknown) {
+        reject(error);
+      }
+    }).catch((error: unknown) => {
       if (error instanceof AppError) {
         for (const [type, errors] of Object.entries(error.errors)) {
-          if (errors) this.push(type as ErrorTypes, errors);
+          if (errors)
+            errors.forEach((err) =>
+              this.push(type as ErrorTypes, err.message, { scope: err.scope }),
+            );
         }
       } else {
         if (error instanceof Error) {
@@ -61,35 +85,82 @@ export class AppError<ErrorTypes extends Capitalize<string>> extends Error {
     });
   }
 
-  protected toString() {
-    const formattedErrors = (Object.keys(this.errors) as ErrorTypes[]).map(
-      this.formatErrorType.bind(this),
-    );
+  toString(
+    options?: Omit<
+      Parameters<AppError<ErrorTypes>['matchesScope']>['0'],
+      'errScope'
+    >,
+  ) {
+    const formattedErrors = [] as string[];
+    (Object.keys(this.errors) as ErrorTypes[]).forEach((errorType) => {
+      const rawErrors = this.errors[errorType];
+      if (!rawErrors) return;
+
+      const { indentation = 4 } = this.options || {};
+
+      const formattedErrorType = rawErrors.reduce((result, err) => {
+        const hasMatchedScope = this.matchesScope({
+          errScope: err.scope,
+          includesScope: options?.includesScope,
+          excludesScope: options?.excludesScope,
+        });
+
+        if (hasMatchedScope) {
+          result.push(`${result.length + 1}- ${err.message}.`);
+        }
+
+        return result;
+      }, [] as string[]);
+
+      const hasManyErrors = formattedErrorType.length > 1;
+      const indentationPrefix = hasManyErrors
+        ? `${' '.repeat(indentation)}`
+        : '';
+
+      if (formattedErrorType.length > 0)
+        formattedErrors.push(
+          `${errorType} ${hasManyErrors ? 'Errors:\n' : 'Error: '}${indentationPrefix}${formattedErrorType.join(`\n${indentationPrefix}`)}`,
+        );
+    });
 
     return formattedErrors.join('\n');
   }
 
-  protected formatErrorType(errorType: ErrorTypes) {
-    const rawErrors = this.errors[errorType];
-    if (!rawErrors) return '';
-    const { indentation = 4 } = this.options || {};
-    const hasManyErrors = rawErrors.length > 1;
-    const indentationPrefix = hasManyErrors ? `${' '.repeat(indentation)}` : '';
-    const formattedErrorType = rawErrors.map(
-      (err, i) =>
-        `${indentationPrefix}${hasManyErrors ? `${i + 1}- ` : ''}${err}.`,
-    );
+  matchesScope({
+    errScope,
+    includesScope,
+    excludesScope,
+  }: {
+    errScope: ErrorScope;
+    includesScope?: ErrorScope;
+    excludesScope?: ErrorScope;
+  }) {
+    if (includesScope === undefined && excludesScope === undefined) return true;
+    if (errScope === undefined) return false;
 
-    return `${errorType} ${hasManyErrors ? 'Errors:\n' : 'Error: '}${formattedErrorType.join('\n')}`;
+    if (excludesScope) {
+      return !excludesScope.some((scope) => errScope.includes(scope));
+    }
+
+    if (includesScope) {
+      return includesScope.some((scope) => errScope.includes(scope));
+    }
+
+    return false;
   }
 
-  push(type: ErrorTypes, error: string | string[]) {
+  push(type: ErrorTypes, error: string | string[], options?: PushOptions) {
     const errorType = capitalize(type, { onlyFirstWord: true }) as ErrorTypes;
     const errors = this.errors[errorType];
+
+    const newError = Array.isArray(error)
+      ? error.map((err) => ({ message: err, scope: options?.scope }))
+      : [{ message: error, scope: options?.scope }];
+
     if (Array.isArray(errors)) {
-      errors.push(...(Array.isArray(error) ? error : [error]));
+      errors.push(...newError);
     } else {
-      this.errors[errorType] = Array.isArray(error) ? [...error] : [error];
+      this.errors[errorType] = newError;
       this.length++;
     }
 
