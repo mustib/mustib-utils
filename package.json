@@ -48,7 +48,9 @@
     "prebuild": "npm run lint && rimraf ./dist",
     "build": "rollup -c rollup.config.js",
     "prepublishOnly": "npm run build",
-    "postbuild": "node ./postBuildScript.js"
+    "postbuild": "node ./postBuildScript.js",
+    "test": "vitest run",
+    "test-watch": "vitest watch"
   },
   "files": [
     "./dist",
@@ -80,7 +82,8 @@
     "rollup-plugin-dts": "^6.1.1",
     "tslib": "^2.7.0",
     "tsx": "^4.11.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vitest": "^2.1.8"
   },
   "dependencies": {
     "dotenv": "^16.4.5"
