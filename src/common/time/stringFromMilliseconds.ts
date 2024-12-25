@@ -26,7 +26,7 @@ export function stringFromMilliseconds(
   if (maxUnitIndex === -1) {
     return AppError.throw(
       'Unsupported',
-      `Unsupported maxUnit (${options?.maxUnit}) it must be one of (${timeUnitsOrder.join(', ')})`,
+      `unsupported maxUnit (${options?.maxUnit}) it must be one of (${timeUnitsOrder.join(', ')})`,
     ) as never;
   }
 
