@@ -1,12 +1,12 @@
+import { AppError } from '../AppError';
+
 import {
   timeUnitsOrder,
   timeUnits,
   type TimeUnits,
   type Unit,
   type TimeUnit,
-} from '../constants/timeUnits';
-
-import { AppError } from './AppError';
+} from './constants';
 
 export function stringFromMilliseconds(
   milliseconds: number,

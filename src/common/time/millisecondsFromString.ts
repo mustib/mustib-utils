@@ -1,5 +1,6 @@
-import { timeUnits, type TimeUnits } from '../constants/timeUnits';
-import { AppError } from './AppError';
+import { AppError } from '../AppError';
+
+import { timeUnits, type TimeUnits } from './constants';
 
 type Options = { separator?: string };
 
@@ -7,8 +8,9 @@ export function millisecondsFromString(
   string: TimeUnits,
   options?: Options,
 ): number {
-  const { separator = ':' } = options || {};
+  if (typeof string !== 'string' || (string as string) === '') return 0;
 
+  const { separator = ':' } = options || {};
   const parts = string.split(separator);
   const milliseconds = parts.reduce((prev, part) => {
     const regex = /^(?<value>\d+)(?<unit>[a-z]+)$/.exec(part);
