@@ -40,8 +40,10 @@ type EnvVarsMapObj = {
 
     /**
      * a boolean indicates that the value is dynamic and will be parsed again every time it is needed.
-     * it only make sense to use it when parseAs is a function and returns a dynamic value.
+     * it only make sense to use it when parsedValue is dynamic and can be changed.
      * parseAs function will be set as a getter method to the variable.
+     *
+     * @default false
      */
     useDynamicValue?: boolean;
   };
@@ -74,6 +76,12 @@ type EnvVars = new <VarsMapObj extends EnvVarsMapObj = EnvVarsMapObj>(
 };
 
 type ConstructorParams<VarsMapObj extends EnvVarsMapObj> = {
+  /**
+   * If true, it will be used as a global value for `mapObj.useDynamicValue` when its value is undefined.
+   * See {@link EnvVarsMapObj} for more information.
+   */
+  useDynamicValues?: boolean;
+
   /**
    * the sources of env vars, it can be a string containing .env file path or an object containing fromFile, fromObject and fromDynamicFunction or an array of that object
    * defaults to { fromObject: process.env }
@@ -378,11 +386,12 @@ function getParseAsHandler({
 /**
  * Simplify and make it as easy as possible to work with environment variables
  */
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const EnvVars = class _EnvVars {
+// eslint-disable-next-line @typescript-eslint/no-redeclare, @typescript-eslint/no-shadow
+export const EnvVars = class EnvVars {
   constructor({
     sources = { fromObject: process.env },
     mapObj,
+    useDynamicValues,
     enumerable = false,
     currentEnv = process.env.NODE_ENV!,
   }: ConstructorParams<EnvVarsMapObj>) {
@@ -403,9 +412,12 @@ export const EnvVars = class _EnvVars {
           whenNodeEnvIs,
         });
 
+        const shouldBeDynamic =
+          useDynamicValue || (useDynamicValues && useDynamicValue !== false);
+
         Object.defineProperty(this, varName, {
           enumerable,
-          ...(useDynamicValue ? { get: handler } : { value: handler() }),
+          ...(shouldBeDynamic ? { get: handler } : { value: handler() }),
         });
       },
     );
