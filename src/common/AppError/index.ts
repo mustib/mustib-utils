@@ -1,6 +1,6 @@
-import { capitalize } from './capitalize';
+import { capitalize } from '../capitalize';
 
-import type { Func } from './types';
+import type { Func } from '../types';
 
 export type ErrorScope = (string | symbol)[] | undefined;
 
@@ -22,7 +22,7 @@ export class AppError<ErrorTypes extends Capitalize<string>> extends Error {
       .throw();
   }
 
-  static aggregate<ErrorTypes extends Capitalize<string>>(
+  static async aggregate<ErrorTypes extends Capitalize<string>>(
     aggregateFunc: (
       appError: Omit<AppError<ErrorTypes>, 'end'>,
     ) => void | Promise<void>,
@@ -30,21 +30,18 @@ export class AppError<ErrorTypes extends Capitalize<string>> extends Error {
   ) {
     const appError = new AppError(options);
 
-    return new Promise((resolve, reject) => {
-      try {
-        aggregateFunc(appError);
-        appError.end();
-        resolve(undefined);
-      } catch (error) {
-        if (error instanceof Error) {
-          Error.captureStackTrace(
-            error,
-            options?.stackTraceConstructor ?? AppError.aggregate,
-          );
-        }
-        reject(error);
+    try {
+      await aggregateFunc(appError);
+      appError.end();
+    } catch (error) {
+      if (error instanceof Error) {
+        Error.captureStackTrace(
+          error,
+          options?.stackTraceConstructor ?? AppError.aggregate,
+        );
       }
-    });
+      throw error;
+    }
   }
 
   protected length = 0;
@@ -61,14 +58,10 @@ export class AppError<ErrorTypes extends Capitalize<string>> extends Error {
     super();
   }
 
-  catch(catchFunc: () => void) {
-    return new Promise((resolve, reject) => {
-      try {
-        resolve(catchFunc());
-      } catch (error: unknown) {
-        reject(error);
-      }
-    }).catch((error: unknown) => {
+  async catch(catchFunc: () => void | Promise<void>) {
+    try {
+      await catchFunc();
+    } catch (error) {
       if (error instanceof AppError) {
         for (const [type, errors] of Object.entries(error.errors)) {
           if (errors)
@@ -82,7 +75,7 @@ export class AppError<ErrorTypes extends Capitalize<string>> extends Error {
         }
         throw error;
       }
-    });
+    }
   }
 
   toString(
