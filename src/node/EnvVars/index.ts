@@ -1,6 +1,11 @@
 import { existsSync, readFileSync } from 'fs';
 
-import { getTypeof, AppError, type Func, type UntypedObject } from '../common';
+import {
+  getTypeof,
+  AppError,
+  type Func,
+  type UntypedObject,
+} from '../../common';
 
 type ParseAsString = 'date' | 'string' | 'number' | 'bool';
 
@@ -69,7 +74,7 @@ type EnvVars = new <VarsMapObj extends EnvVarsMapObj = EnvVarsMapObj>(
             ? Date
             : Type extends Func
               ? ReturnType<Type>
-              : never
+              : string
     : never;
 };
 
@@ -105,7 +110,7 @@ type ConstructorParams<VarsMapObj extends EnvVarsMapObj> = {
 function parseEnvFile(path: string) {
   if (!existsSync(path)) {
     AppError.throw(
-      'Undefined',
+      'Not-Found',
       `provided env file path (${path}) doesn't exist`,
     );
   }
@@ -124,8 +129,8 @@ function parseEnvFile(path: string) {
 
     if (key === '')
       AppError.throw(
-        'Undefined',
-        `empty key found in env file (${path}) with value = (${value})`,
+        'Invalid',
+        `empty variable name found in env file (${path}) with value = (${value})`,
       );
 
     vars[key] = value;
@@ -220,8 +225,8 @@ function combineEnvVarsSources(sources: EnvVarsSources) {
       break;
     default:
       AppError.throw(
-        'Unsupported',
-        `unsupported env vars source type, only string, object and array are supported, but instead got (${typeofSources})`,
+        'Invalid',
+        `invalid env vars source type, only string, object and array are supported, but instead got (${typeofSources})`,
       );
   }
 
@@ -230,25 +235,41 @@ function combineEnvVarsSources(sources: EnvVarsSources) {
     combinedEnvVarsSources.push(obj);
 
   envVarsSources.forEach(({ fromFile, fromObject, fromDynamicFunction }) => {
-    if (typeof fromFile === 'string') {
-      pushToCombinedEnvVars(parseEnvFile(fromFile));
-    }
+    const typeofFromFile = getTypeof(fromFile);
+    if (typeofFromFile === 'string') {
+      pushToCombinedEnvVars(parseEnvFile(fromFile!));
+    } else if (typeofFromFile !== 'undefined')
+      AppError.throw(
+        'Invalid',
+        `fromFile in EnvVars sources must be an file but instead got (${typeofFromFile})`,
+      );
 
-    if (getTypeof(fromObject) === 'object') pushToCombinedEnvVars(fromObject!);
+    const typeofFromObject = getTypeof(fromObject);
+    if (typeofFromObject === 'object') pushToCombinedEnvVars(fromObject!);
+    else if (typeofFromObject !== 'undefined')
+      AppError.throw(
+        'Invalid',
+        `fromObject in EnvVars sources must be an object but instead got (${typeofFromObject})`,
+      );
 
-    if (typeof fromDynamicFunction === 'function') {
-      const vars = fromDynamicFunction();
+    const typeofFromDynamicFunction = getTypeof(fromDynamicFunction);
+    if (typeofFromDynamicFunction === 'function') {
+      const vars = fromDynamicFunction!();
       const typeofVars = getTypeof(vars);
 
       if (typeofVars !== 'object') {
         AppError.throw(
-          'Undefined',
+          'Invalid',
           `failed to get env vars from dynamic function as it returned a value of type (${typeofVars}) which is not an object`,
         );
       }
 
       pushToCombinedEnvVars(vars);
-    }
+    } else if (typeofFromDynamicFunction !== 'undefined')
+      AppError.throw(
+        'Invalid',
+        `fromDynamicFunction in EnvVars sources must be a function but instead got (${typeofFromDynamicFunction})`,
+      );
   });
 
   const hasAssignedValue = JSON.stringify(combinedEnvVarsSources) !== '{}';
@@ -347,9 +368,9 @@ function parseVarValueFromString({
 
     default:
       return AppError.throw(
-        'Unsupported',
+        'Invalid',
         `parseAs as a string value must be a "string" or "number" or "date" or "bool" but instead got (${parseAsStringValue})`,
-      ) as never;
+      );
   }
 }
 
@@ -374,6 +395,12 @@ function getParseAsHandler({
     whenNodeEnvIs,
     combinedEnvVarsSources,
   });
+
+  if (typeof varValue !== 'string')
+    AppError.throw(
+      'Invalid',
+      `expected the value for (${varName}) which has the name (${varNameInSources}) in the sources for the current env which is (${currentEnv}) to be a string, but received type (${getTypeof(varValue)}).`,
+    );
 
   const typeofParseAs = getTypeof(parseAs);
 
@@ -401,8 +428,8 @@ function getParseAsHandler({
       break;
     default:
       return AppError.throw(
-        'Unsupported',
-        `parseAs must be a string with a value of ("string" | "number" | "date" | "bool") or a function that parses the value and returns it, but ${typeofParseAs} is not supported parseAs type`,
+        'Invalid',
+        `parseAs must be a string with a value of ("string" | "number" | "date" | "bool") or a function that parses the value and returns it, but ${typeofParseAs} is not a valid parseAs type`,
       ) as never;
   }
 
@@ -424,6 +451,7 @@ export const EnvVars = class EnvVars {
     if (currentEnv === undefined) {
       // eslint-disable-next-line no-console
       console.warn('currentEnv is undefined');
+      throw new Error(currentEnv);
     }
 
     const combinedEnvVarsSources = combineEnvVarsSources(sources);
