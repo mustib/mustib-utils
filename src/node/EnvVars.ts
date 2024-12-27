@@ -1,6 +1,4 @@
-import { existsSync } from 'fs';
-
-import { parse } from 'dotenv';
+import { existsSync, readFileSync } from 'fs';
 
 import { getTypeof, AppError, type Func, type UntypedObject } from '../common';
 
@@ -104,6 +102,38 @@ type ConstructorParams<VarsMapObj extends EnvVarsMapObj> = {
   enumerable?: boolean;
 };
 
+function parseEnvFile(path: string) {
+  if (!existsSync(path)) {
+    AppError.throw(
+      'Undefined',
+      `provided env file path (${path}) doesn't exist`,
+    );
+  }
+
+  const content = readFileSync(path, 'utf-8');
+
+  const lines = content.split('\n');
+
+  return lines.reduce((vars, line) => {
+    // Ignore empty lines and comments
+    if (line.trim() === '' || line.startsWith('#')) {
+      return vars;
+    }
+
+    const [key, value] = line.split('=').map((val) => val.trim());
+
+    if (key === '')
+      AppError.throw(
+        'Undefined',
+        `empty key found in env file (${path}) with value = (${value})`,
+      );
+
+    vars[key] = value;
+
+    return vars;
+  }, {} as UntypedObject);
+}
+
 const parseAsStringHandlers: {
   [key in ParseAsString]: (_value: string) => {
     value:
@@ -201,11 +231,7 @@ function combineEnvVarsSources(sources: EnvVarsSources) {
 
   envVarsSources.forEach(({ fromFile, fromObject, fromDynamicFunction }) => {
     if (typeof fromFile === 'string') {
-      if (!existsSync(fromFile)) {
-        AppError.throw('Undefined', `failed to find env file ${fromFile}`);
-      }
-
-      pushToCombinedEnvVars(parse(fromFile));
+      pushToCombinedEnvVars(parseEnvFile(fromFile));
     }
 
     if (getTypeof(fromObject) === 'object') pushToCombinedEnvVars(fromObject!);
