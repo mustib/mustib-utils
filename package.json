@@ -50,7 +50,8 @@
     "prepublishOnly": "npm run build",
     "postbuild": "node ./postBuildScript.js",
     "test": "vitest run",
-    "test-watch": "vitest watch"
+    "test-watch": "vitest watch",
+    "docs-dev": "cd ./docs && npm run dev"
   },
   "files": [
     "./dist",

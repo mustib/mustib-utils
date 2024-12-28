@@ -16,6 +16,7 @@
   "parserOptions": { "project": ["./tsconfig.json"] },
   "plugins": ["@typescript-eslint", "prettier"],
   "rules": {
+    "import/extensions": "off",
     "import/order": [
       "error",
       {

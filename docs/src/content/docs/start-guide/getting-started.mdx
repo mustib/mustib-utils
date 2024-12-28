@@ -1,0 +1,69 @@
+---
+title: Getting Started
+---
+
+import { FileTree } from '@astrojs/starlight/components';
+
+This [package](https://github.com/mustib/mustib-utils) is a collection of utilities that I use in nearly every project.<br />
+It was part of one of my learning projects, but since it became bigger, and I needed
+it for multiple projects, I decided to move it to its own package.
+
+## Installation:
+
+```bash
+npm install @mustib/utils@latest
+```
+
+## Usage:
+
+exports are divided into 3 categories:
+
+- **`/`** for common utilities that work in both **node** and **browser** environments
+- **`/node`** for **node** environments
+- **`/browser`** for **browser** environments
+
+```js
+// common utilities
+import { AppError } from '@mustib/utils';
+
+// node utilities
+import { EnvVars } from '@mustib/utils/node';
+
+// browser utilities
+import { getElementBoundaries } from '@mustib/utils/browser';
+```
+
+:::note
+common utilities can be imported from both **/node** and **/browser**
+:::
+
+## Available Utils
+
+<FileTree>
+- /
+  - AppError
+  - capitalize
+  - getTypeOf
+  - parseJson
+  - millisecondsFromString
+  - stringFromMilliseconds
+  - CustomEventEmitter
+  - mergeTwoObjects
+
+- /node
+
+  - EnvVars
+  - getDirName
+  - TypedEventEmitter
+
+- /browser
+  - getElementBoundaries
+  - getScrollbarWidth
+
+</FileTree>
+
+:::note
+
+- All utilities are exported as **named exports** under their category
+- Both **ESM** and **CJS** are supported depending on your package manager configuration (e.g. `import` vs `require`)
+  :::
