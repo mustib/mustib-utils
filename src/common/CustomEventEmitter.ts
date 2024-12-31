@@ -102,7 +102,10 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
       ): Event['listenerValue'];
 
       listeners: {
-        [type in EventListenerType]?: Set<(listener: any) => void>;
+        [type in EventListenerType]?: Map<
+          (value: any) => void,
+          { isOnce: boolean; listener(value: any): void }
+        >;
       };
     };
   };
@@ -217,18 +220,6 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
     else this.debugListeners.add(listener);
   }
 
-  protected createOnceListener<Name extends keyof EventMaps>(
-    name: Name,
-    listener: (value: EventMaps[Name]['listenerValue']) => void,
-    options?: Omit<EventListenerOptions, 'once'>,
-  ) {
-    const onceListener = (...args: Parameters<typeof listener>) => {
-      listener(...args);
-      this.removeListener(name, listener, options);
-    };
-    return onceListener;
-  }
-
   addListener<Name extends keyof EventMaps>(
     name: Name,
     listener: (value: EventMaps[Name]['listenerValue']) => void,
@@ -241,22 +232,20 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
     if (event.destructed) return this;
 
     const listenerType = listenerOptions?.type ?? 'normal';
-    const listenerHandler = listenerOptions?.once
-      ? this.createOnceListener(name, listener, listenerOptions)
-      : listener;
+    const listenerObject = { isOnce: !!listenerOptions?.once, listener };
 
     if (event.listeners[listenerType]) {
       // NOTE: exclamation mark is needed to avoid @rollup/plugin-typescript build error TS2532: Object is possibly 'undefined'.
-      event.listeners[listenerType]!.add(listenerHandler);
+      event.listeners[listenerType]!.set(listener, listenerObject);
     } else {
-      event.listeners[listenerType] = new Set([listenerHandler]);
+      event.listeners[listenerType] = new Map([[listener, listenerObject]]);
     }
 
     if (this.debugListeners) {
       this.debugListeners.forEach((debugListener) =>
         debugListener(name.toString(), 'added listener', {
           type: listenerType,
-          once: !!listenerOptions?.once,
+          once: listenerObject.isOnce,
         }),
       );
     }
@@ -291,9 +280,10 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
       );
 
     EVENT_LISTENER_TYPES_PRIORITIES.forEach((priority) => {
-      event.listeners[priority]?.forEach((listener) =>
-        listener(dispatchedValue),
-      );
+      event.listeners[priority]?.forEach(({ listener, isOnce }) => {
+        listener(dispatchedValue);
+        if (isOnce) this.removeListener(name, listener, { type: priority });
+      });
     });
 
     return this;
