@@ -1,6 +1,6 @@
-import { getTypeof } from './getTypeof';
+import { getTypeof } from '../getTypeof';
 
-import type { UntypedObject } from './types';
+import type { UntypedObject } from '../types';
 
 type MergeObjects<Target, Source> =
   Target extends Array<any>
