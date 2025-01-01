@@ -1,4 +1,4 @@
-import { AppError } from './AppError';
+import { AppError } from '../AppError';
 
 const EVENT_LISTENER_TYPES_PRIORITIES = ['prepend', 'normal'] as const;
 
@@ -64,10 +64,10 @@ type EventConstructorEventObject<Event extends EventObject> = {
         prepare?: (value: Event['dispatchValue']) => Event['listenerValue'];
       }) &
   (Event['destructible'] extends true
-    ? Event['dispatchable'] extends false
+    ? { lockSymbol: symbol }
+    : Event['dispatchable'] extends false
       ? { lockSymbol: symbol }
-      : { lockSymbol?: undefined }
-    : { lockSymbol?: undefined });
+      : { lockSymbol?: undefined });
 
 export type EventDebugListener = <
   Type extends
@@ -113,64 +113,56 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
   constructor(events: {
     [name in keyof EventMaps]-?: EventConstructorEventObject<EventMaps[name]>;
   }) {
-    AppError.aggregate<EventErrorTypes>((appError) => {
-      Object.keys(events).forEach((name) => {
-        const {
-          destructible = false,
-          dispatchable = true,
-          listener,
-          lockSymbol,
+    const appError = new AppError();
+
+    Object.keys(events).forEach((name) => {
+      const {
+        destructible = false,
+        dispatchable = true,
+        listener,
+        lockSymbol,
+        prepare,
+      } = events[name];
+
+      let hasError = false;
+
+      if (lockSymbol !== undefined && typeof lockSymbol !== 'symbol') {
+        appError.push('Invalid', `lockSymbol must be of type (symbol)`);
+        hasError = true;
+      }
+
+      if (!dispatchable && !lockSymbol) {
+        appError.push(
+          'Invalid',
+          `non dispatchable event (${name as string}) must have lockSymbol`,
+        );
+        hasError = true;
+      }
+
+      if (destructible && !lockSymbol) {
+        appError.push(
+          'Invalid',
+          `destructible event (${name as string}) must have lockSymbol`,
+        );
+        hasError = true;
+      }
+
+      if (!hasError) {
+        this.events[name] = {
           prepare,
-        } = events[name];
-
-        let hasError = false;
-        const isDuplicated = this.events[name] !== undefined;
-
-        if (isDuplicated) {
-          appError.push(
-            'Duplicated',
-            `(${name as string}) event already exists`,
-          );
-          hasError = true;
-        }
-
-        if (lockSymbol !== undefined && typeof lockSymbol !== 'symbol') {
-          appError.push('Invalid', `lockSymbol must be of type (symbol)`);
-          hasError = true;
-        }
-
-        if (!dispatchable && !lockSymbol) {
-          appError.push(
-            'Invalid',
-            `non dispatchable event (${name as string}) must have lockSymbol`,
-          );
-          hasError = true;
-        }
-
-        if (destructible && !lockSymbol) {
-          appError.push(
-            'Invalid',
-            `destructible event (${name as string}) must have lockSymbol`,
-          );
-          hasError = true;
-        }
-
-        if (!hasError) {
-          this.events[name] = {
-            prepare,
-            listeners: {},
-            destructed: false,
-            destructible,
-            dispatchable,
-            lockSymbol,
-          };
-          if (listener)
-            if (typeof listener === 'function')
-              this.addListener(name, listener);
-            else this.addListener(name, listener.listener, listener.options);
-        }
-      });
+          listeners: {},
+          destructed: false,
+          destructible,
+          dispatchable,
+          lockSymbol,
+        };
+        if (listener)
+          if (typeof listener === 'function') this.addListener(name, listener);
+          else this.addListener(name, listener.listener, listener.options);
+      }
     });
+
+    appError.end();
   }
 
   protected hasEvent(name: keyof EventMaps) {
@@ -233,10 +225,10 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
 
     const listenerType = listenerOptions?.type ?? 'normal';
     const listenerObject = { isOnce: !!listenerOptions?.once, listener };
+    const listenerMap = event.listeners[listenerType];
 
-    if (event.listeners[listenerType]) {
-      // NOTE: exclamation mark is needed to avoid @rollup/plugin-typescript build error TS2532: Object is possibly 'undefined'.
-      event.listeners[listenerType]!.set(listener, listenerObject);
+    if (listenerMap) {
+      listenerMap.set(listener, listenerObject);
     } else {
       event.listeners[listenerType] = new Map([[listener, listenerObject]]);
     }
