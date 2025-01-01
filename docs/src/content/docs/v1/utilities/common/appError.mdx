@@ -1,0 +1,356 @@
+---
+title: AppError
+description: A class to manage and handle errors in an application
+---
+
+import { Aside, Badge, Code } from '@astrojs/starlight/components';
+
+<Badge text="Type" />: `class`
+
+The **`AppError`** class is designed to manage and handle errors of a specific type in a structured way within an application. It provides mechanisms to collect, report multiple errors, while also supporting error scopes for more granular error management. The class includes methods to push new errors, aggregate errors, and convert them to a string representation. It also provides functionality to catch and throw errors, with custom options for error handling behavior.
+
+The main use case for this class is to create a central place to handle errors in an application, making it easier to manage and report errors in a consistent and structured way.
+
+Let's take an example without using the `AppError` class:
+<Code lang="ts" title='validateUserData.ts' code={`
+if (!user.email) // handle error;
+if (!user.password) // handle error;
+... other validation checks
+`}></Code>
+
+Now the problem is that we need to do the same thing for all other functions that might throw errors like this example:
+<Code lang="ts" title='createUser.ts' code={`
+try {
+  validateUserData(user);
+  const isUserExist = await isUserExist(user);
+  if (isUserExist) {'do something'};
+  const user = await createUser(user);
+} catch (error) {
+  'handle errors'
+}
+`}></Code>
+
+Each of the functions used in the previous example might throw it's own errors, and if we don't handle each of them separately we don't really know which error is the one that actually happened. and it will be difficult to handle if we need to return all related errors together to the client.
+
+Now let's use the `AppError` class:
+<Code lang="ts" title='validateUserData.ts' code={`
+const appError = new AppError();
+if (!user.email) appError.push('Validation', 'email is required');
+if (!user.password) appError.push('Validation', 'password is required')
+... other validation checks
+appError.end()
+`}></Code>
+
+<Code lang='ts' title='createUser.ts' code={`
+AppError.aggregate(async (appError) => {
+    await appError.catch(() => {
+      validateUserData(user);
+    });
+
+    const isUserExist = await isUserExist(user);
+    if (isUserExist) {appError.push('Duplication', 'user already exist');}
+
+    await appError.catch(async () => {
+      await createUser(user)
+    })
+})
+`}></Code>
+
+Now we only need to handle the `AppError` instance, and we can return all related errors together to the client like this.
+
+<Code lang='ts' code={`
+try {
+  ... implementations
+} catch (error) {
+  if (error instanceof AppError) {
+    return error.toString({
+      includesScope: ['user', 'Validation'],
+      excludesScope: ['secret scope'],
+      });
+  } else {'send generic error message'}
+}
+`}></Code>
+
+With that we only need to handle errors in a central place.
+
+## Definition
+```ts
+export class AppError<ErrorTypes extends Capitalize<string>> extends Error {}
+```
+
+### Generics
+- <span id="errortypes">`ErrorTypes`</span> - a capitalized string union of error types that are allowed to be pushed to the error instance
+    - For Example
+      ```ts
+      type ErrorTypes = 'Validation' | 'Duplication';
+      const appError = new AppError<ErrorTypes>();
+      appError.push('Validation', 'email is required');
+      ```
+
+## Constructor()
+```ts
+type AppError = new (options?: ErrorOptions): AppError
+```
+- parameters: 
+  1. `options?:` [ErrorOptions](#erroroptions)
+
+
+## Properties
+
+### length
+<Badge text="visibility:" />: `protected`
+
+<Badge text="Type" />: `number`
+
+<Badge text="default:" />: `0`
+
+Indicates the number of error types present in the instance
+
+### message
+<Badge text="visibility:" />: `public`
+
+<Badge text="Type" />: `string`
+
+- a getter that returns the error message containing all errors
+
+### errors
+<Badge text="visibility:" />: `protected`
+
+```ts
+type errors = {[key in ErrorTypes]?: { message: string; scope?: ErrorScope }[]}
+```
+- an object that contains all errors of the instance. The keys of the object are
+  the error types, and the values are arrays of objects with the following
+  properties:
+  - `message`: the error message
+  - `scope?`: the [scope](#errorscope) of the error
+
+## Methods
+
+### throw()
+<Badge text="visibility:" />: `public`
+```ts
+type throw = <ErrorTypes extends Capitalize<string>>(
+    type: ErrorTypes,
+    error: string | string[],
+    options?: ErrorOptions & { pushOptions?: PushOptions },
+  ): never
+```
+
+This method is used to create a new `AppError` instance, push the error to it, and throw it instead of having to it that manually.
+
+- `parameters:`
+      1. `type:` [ErrorTypes](#errortypes)
+      2. `error:` string | string[]
+          - see [push](#push) error parameter for more details
+      3. `options?:` [ErrorOptions](#erroroptions) & \{ pushOptions?: [PushOptions](#pushoptions) \}
+
+#### Usage:
+```ts
+AppError.throw('Error Type', 'Error Message')
+```
+
+### aggregate()
+<Badge text="visibility:" />: `public`
+```ts
+type aggregate = async <ErrorTypes extends Capitalize<string>>(
+    aggregateFunc: (
+      appError: Omit<AppError<ErrorTypes>, 'end'>,
+    ) => void | Promise<void>,
+    options?: ErrorOptions,
+  ): Promise<void>
+```
+
+This method is used if you don't want to create a new `AppError` instance and end it manually by calling the `end()` method at the end of your implementations as it does it for you.
+
+- `parameters:`
+    1. `aggregateFunc:` (appError: Omit\<AppError\<ErrorTypes\>, 'end'\>) =\> void | Promise\<void\>
+        - a function that will be called with a new `AppError` instance as a parameter.
+        - it can be async or normal function.
+    2. `options?:` [ErrorOptions](#erroroptions)
+
+- `returns:` Promise\<void\>
+
+#### Usage:
+```ts
+AppError.aggregate(async (appError) => {
+  appError.push('Error Type', 'Error Message');
+  appError.catch(async () => {
+    await doSomething();
+  })
+})
+```
+
+### catch()
+<Badge text="visibility:" />: `public`
+```ts
+type catch = async (catchFunc: () => void | Promise<void>): Promise<void>
+```
+This method is used to catch errors thrown from other `AppError` instances and add them to the current `AppError` instance.
+
+- `parameters:`
+    1. `catchFunc:` () =\> void | Promise\<void\>
+        - it will be called inside a try catch block to catch errors thrown from other `AppError` instances.
+        - it can be async or normal function.
+
+- `returns:` Promise\<void\>
+
+#### Usage:
+```ts
+const appError = new AppError();
+await appError.catch(async () => {
+  await doSomething();
+});
+```
+
+<Aside type='note'>
+If catch encounters errors other than `AppError` instances, it will throw them.
+</Aside>
+
+
+### push()
+<Badge text="visibility:" />: `public`
+```ts
+type push = (type: ErrorTypes, error: string | string[], options?: PushOptions): void
+
+```
+This method is used to add new errors to the `AppError` instance's [errors](#errors) property.
+
+- `parameters:`
+  1. `type:` [ErrorTypes](#errortypes)
+  2. `error:` string | string[]
+      - `string` - the error message to be added
+      - `string[]` - an array of error messages to be added
+  3. `options?:` [PushOptions](#pushoptions)
+
+- `returns:` void
+
+#### Usage:
+```ts
+const appError = new AppError();
+appError.push('Error Type', ['Error Message 1', 'Error Message 2'], {scope: ['user']});
+appError.push('Another Error Type', 'Another Error Message', {scope: ['validation']});
+```
+
+### matchesScope()
+`visibility:` protected
+```ts
+type matchesScope = (options: {
+    errScope: ErrorScope;
+    includesScope?: ErrorScope;
+    excludesScope?: ErrorScope;
+  }): boolean
+```
+This method check if the error can be displayed or not based on the `includesScope` and `excludesScope` provided.<br/>
+It returns `true` if the error scope has any scope in `includesScope` and has no scope in `excludesScope` or there is no includes or excludes scope and returns `false` otherwise.
+
+- `parameters:`
+  1. `options:` an object with the following properties:
+      - `errScope: ErrorScope` - the scope of the error to check
+      - `includesScope?: ErrorScope` - an optional array of scopes to include
+      - `excludesScope?: ErrorScope` - an optional array of scopes to exclude
+- `returns:` boolean
+
+### toString()
+<Badge text="visibility:" />: `public`
+```ts
+type toString = (options?: Omit<
+      Parameters<AppError<ErrorTypes>['matchesScope']>['0'],
+      'errScope'
+    >,
+  ): string
+```
+This method is used to get a string representation of the `AppError` instance.
+
+- `parameters:`
+  1. `options?:` the same as the [matchesScope](#matchesscope) method, but without the `errScope` property as it will be the scope of the current error.
+
+- `returns:` 
+
+#### Usage:
+```ts
+const appError = new AppError();
+const allErrors = appError.toString();
+const validationErrors = appError.toString({includesScope: ['validation']});
+const otherErrors = appError.toString({excludesScope: ['validation']});
+```
+
+<Aside type="note">
+if passed, the `options` parameter will be used to filter the errors by their scope. This
+can be useful to display only errors of a specific scope. Otherwise, all errors will be
+returned.
+</Aside>
+
+
+### throw()
+<Badge text="visibility:" />: `protected`
+```ts
+type throw = (): never
+```
+throws the `AppError` instance even if there are no errors.
+
+- `parameters:` undefined
+- `returns:` never
+
+### end()
+<Badge text="visibility:" />: `public`
+```ts
+type end (): void
+```
+throws the `AppError` instance if there are errors.
+
+- `parameters:` undefined
+- `returns:` void
+
+#### Usage:
+```ts
+const appError = new AppError();
+appError.end();
+```
+
+<Aside type="caution" title="Important Note">
+This method has to be called after all errors have been added to the `AppError` instance in order to throw the error --if there are any errors--, otherwise all errors will not be thrown and will be **lost**.
+</Aside>
+
+## ErrorScope
+
+```ts
+type ErrorScope = (string | symbol)[] | undefined
+```
+
+The error scope is an array of strings and/or symbols that can be used to filter
+errors based on their scope.
+
+<Aside type="tip" title="Best Practices">
+  - it is always recommended to:
+    1. provide a scope for errors, as it helps later to get error message only for
+    these scopes, which helps for example, not to send sensitive errors to the
+    client.
+    2. add unique symbols to your scope to avoid conflicts with other scopes,
+    specially for third-party libraries.
+    3. export your scopes to help your users filter your thrown errors
+</Aside>
+
+## ErrorOptions
+```ts
+type ErrorOptions = {
+  indentation?: number;
+  stackTraceConstructor?: Func;
+};
+```
+
+- ### indentation
+    - used to indent the error message for better readability
+    - default value is: `4`
+
+- ### stackTraceConstructor
+    - used as `Error.captureStackTrace(error, stackTraceConstructor)` when throwing an error
+    - default value is: `AppError.prototype.throw`
+
+## PushOptions
+```ts
+type PushOptions = { scope?: ErrorScope }
+```
+
+- ### scope
+    - See [ErrorScope](#errorscope) for more details

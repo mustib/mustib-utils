@@ -5,7 +5,9 @@ import type { Func } from '../types';
 export type ErrorScope = (string | symbol)[] | undefined;
 
 export type ErrorOptions = {
+  // used to indent the error message for better readability
   indentation?: number;
+  // used as Error.captureStackTrace(error, stackTraceConstructor) when throwing an error
   stackTraceConstructor?: Func;
 };
 
@@ -119,7 +121,7 @@ export class AppError<ErrorTypes extends Capitalize<string>> extends Error {
     return formattedErrors.join('\n');
   }
 
-  matchesScope({
+  protected matchesScope({
     errScope,
     includesScope,
     excludesScope,
