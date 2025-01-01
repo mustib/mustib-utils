@@ -1,0 +1,52 @@
+---
+title: capitalize
+description: A function that capitalizes the first letter of a string or each word in a string.
+---
+
+import { Aside, Badge, Code } from '@astrojs/starlight/components';
+
+<Badge text="Type" />: `function`
+
+The **`capitalize`** function capitalizes the first letter of a string or each word in a string with a custom splitter and joiner.
+
+## Usage
+```ts
+console.log(capitalize('hello world')); // Hello world
+console.log(capitalize('hello world', { onlyFirstWord: true })); // Hello world
+console.log(capitalize('hello-world')); // Hello-world
+console.log(capitalize('hello-world'), { splitter: '-'}); // Hello-World
+console.log(capitalize('hello-world'), { splitter: '-', joiner: ' '}); // Hello World
+console.log(capitalize('hello world'), { joiner: '-'}); // Hello-World
+```
+
+## Definition
+```ts
+export function capitalize(str: string, options?: Options): string {}
+```
+- `parameters:`
+    1. `str:` string
+        - The string to capitalize
+    2. `options?:` [Options](#options)
+- `returns:` string
+
+## Types
+
+### Options
+```ts
+type Options = {
+  onlyFirstWord?: boolean;
+  splitter?: string;
+  joiner?: string;
+}
+```
+- ### onlyFirstWord
+    - Whether to capitalize only the first word.
+    - default value is: `false`
+
+- ### splitter
+    - The delimiter to split the string into words.
+    - default value is: `' '`
+
+- ### joiner
+    - The delimiter to join the capitalized words.
+    - default value is: [`splitter`](#splitter)
