@@ -13,7 +13,54 @@ describe('CustomEventEmitter', () => {
     emitter.addListener('eventName', listener);
     expect(
       // @ts-expect-error accessing private property
-      emitter.events.eventName?.listeners.normal?.has(listener),
+      emitter.events.eventName?.listeners.normal.has(listener),
+    ).toBe(true);
+  });
+
+  it('should allow prepending a listener to an event', () => {
+    const emitter = new CustomEventEmitter({ eventName: {} });
+    const prependListener = vi.fn();
+    emitter.prependListener('eventName', prependListener);
+    expect(
+      // @ts-expect-error accessing private property
+      emitter.events.eventName?.listeners.prepend.has(prependListener),
+    ).toBe(true);
+  });
+
+  it('should add and prepend listeners from constructor', () => {
+    const listener = vi.fn();
+    const prependListener = vi.fn();
+    const emitter = new CustomEventEmitter({
+      eventName: { listener, prepend: prependListener },
+    });
+    expect(
+      // @ts-expect-error accessing private property
+      emitter.events.eventName?.listeners.normal.has(listener),
+    ).toBe(true);
+    expect(
+      // @ts-expect-error accessing private property
+      emitter.events.eventName?.listeners.prepend.has(prependListener),
+    ).toBe(true);
+  });
+
+  it('should add and prepend listeners from constructor with options', () => {
+    const listener = vi.fn();
+    const prependListener = vi.fn();
+    const emitter = new CustomEventEmitter({
+      eventName: {
+        listener: { listener, options: { once: true } },
+        prepend: { listener: prependListener, options: { once: true } },
+      },
+    });
+    expect(
+      // @ts-expect-error accessing private property
+      emitter.events.eventName?.listeners.normal.has(listener),
+      'should add a listener with options',
+    ).toBe(true);
+    expect(
+      // @ts-expect-error accessing private property
+      emitter.events.eventName?.listeners.prepend.has(prependListener),
+      'should prepend a listener with options',
     ).toBe(true);
   });
 
@@ -24,7 +71,7 @@ describe('CustomEventEmitter', () => {
     emitter.removeListener('eventName', listener);
     expect(
       // @ts-expect-error accessing private property
-      emitter.events.eventName?.listeners.normal?.has(listener),
+      emitter.events.eventName?.listeners.all.has(listener),
     ).toBe(false);
   });
 
@@ -34,7 +81,7 @@ describe('CustomEventEmitter', () => {
     emitter.addListener('eventName', listener, { once: true });
     const hasListener = () =>
       // @ts-expect-error test only
-      emitter.events.eventName?.listeners.normal?.has(listener);
+      emitter.events.eventName?.listeners.all.has(listener);
 
     expect(
       hasListener(),
@@ -56,7 +103,7 @@ describe('CustomEventEmitter', () => {
       value = 'prepend';
     };
     emitter.addListener('eventName', normalListener);
-    emitter.addListener('eventName', prependListener, { type: 'prepend' });
+    emitter.prependListener('eventName', prependListener);
     emitter.dispatch('eventName', undefined);
     expect(value).toBe('normal');
   });
@@ -98,7 +145,7 @@ describe('CustomEventEmitter', () => {
       // @ts-expect-error accessing private property
       emitter.events.eventName.listeners,
       'listeners should be empty',
-    ).toEqual({});
+    ).toEqual({ all: new Map(), prepend: new Set(), normal: new Set() });
   });
 
   it('should throw Invalid error if destructing an event that does not exist', () => {
@@ -238,7 +285,7 @@ describe('CustomEventEmitter', () => {
       'should call debug listener when listener is added',
     ).toBeCalledWith('eventName', 'added listener', {
       once: false,
-      type: 'normal',
+      priority: 'normal',
     });
 
     emitter.dispatch('eventName', { value: 'value' });
@@ -251,7 +298,7 @@ describe('CustomEventEmitter', () => {
     expect(
       debugListener,
       'should call debug listener when listener is removed',
-    ).toBeCalledWith('eventName', 'removed listener', { type: 'normal' });
+    ).toBeCalledWith('eventName', 'removed listener', { priority: 'normal' });
 
     emitter.destruct('eventName', lockSymbol);
     await new Promise((resolve) => {

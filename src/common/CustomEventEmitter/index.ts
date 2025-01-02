@@ -1,54 +1,47 @@
 import { AppError } from '../AppError';
 
-const EVENT_LISTENER_TYPES_PRIORITIES = ['prepend', 'normal'] as const;
+const EVENT_TYPES_PRIORITIES = ['prepend', 'normal'] as const;
 
 type EventErrorTypes = 'Duplicated' | 'Invalid';
 
-type EventListenerType = (typeof EVENT_LISTENER_TYPES_PRIORITIES)[number];
-
-type UnknownObject = Record<string, unknown>;
-
-export type EventListenerOptions = {
+type AddListenerOptions = {
   once?: boolean;
-  type?: EventListenerType;
 };
 
-export type EventRemoveListenerOptions = Pick<EventListenerOptions, 'type'>;
-
-export type EventObject<
-  ListenerValue extends UnknownObject | undefined = any,
-  DispatchValue extends UnknownObject | undefined = ListenerValue,
+export type EventData<
+  ListenerValue = any,
+  DispatchValue = ListenerValue,
+  Dispatchable = true,
+  Destructible = false,
 > = {
-  listenerValue?: ListenerValue;
-  dispatchValue?: DispatchValue;
-  dispatchable?: boolean;
-  destructible?: boolean;
+  listenerValue: ListenerValue;
+  dispatchValue: DispatchValue;
+  dispatchable: Dispatchable;
+  destructible: Destructible;
 };
 
-export type GetEventDispatchValue<Event extends EventObject> =
-  Event['dispatchValue'] extends infer DispatchValue
-    ? DispatchValue extends UnknownObject
-      ? DispatchValue
-      : Event['listenerValue'] extends infer ListenerValue
-        ? ListenerValue extends UnknownObject
-          ? ListenerValue
-          : null
-        : null
-    : null;
+type DefaultEventData = Partial<EventData<any, any, boolean, boolean>>;
 
 export type EventDispatchParams<
   Name extends string | number | symbol,
-  Event extends EventObject,
+  Event extends DefaultEventData,
 > = Event['dispatchable'] extends false
-  ? [Name, GetEventDispatchValue<Event>, { lockSymbol: symbol }]
-  : [Name, GetEventDispatchValue<Event>];
+  ? [Name, Event['dispatchValue'], { lockSymbol: symbol }]
+  : [Name, Event['dispatchValue']];
 
-type EventConstructorEventObject<Event extends EventObject> = {
+type ConstructorEventData<Event extends DefaultEventData> = {
   listener?:
     | ((value: Event['listenerValue']) => void)
     | {
         listener: (value: Event['listenerValue']) => void;
-        options: EventListenerOptions;
+        options: AddListenerOptions;
+      };
+
+  prepend?:
+    | ((value: Event['listenerValue']) => void)
+    | {
+        listener: (value: Event['listenerValue']) => void;
+        options: AddListenerOptions;
       };
 } & (Event['dispatchable'] extends false
   ? { dispatchable: false }
@@ -56,12 +49,16 @@ type EventConstructorEventObject<Event extends EventObject> = {
   (Event['destructible'] extends true
     ? { destructible: true }
     : { destructible?: false }) &
-  (Event['dispatchValue'] extends UnknownObject
+  (Event['dispatchValue'] extends Event['listenerValue']
     ? {
-        prepare: (value: Event['dispatchValue']) => Event['listenerValue'];
+        prepare?: (
+          value: Required<Event>['dispatchValue'],
+        ) => Required<Event>['listenerValue'];
       }
     : {
-        prepare?: (value: Event['dispatchValue']) => Event['listenerValue'];
+        prepare?: (
+          value: Required<Event>['dispatchValue'],
+        ) => Required<Event>['listenerValue'];
       }) &
   (Event['destructible'] extends true
     ? { lockSymbol: symbol }
@@ -79,15 +76,19 @@ export type EventDebugListener = <
   eventName: string,
   operationType: Type,
   details: Type extends 'added listener'
-    ? Required<EventListenerOptions>
-    : Type extends 'dispatched'
-      ? UnknownObject
-      : Type extends 'removed listener'
-        ? EventRemoveListenerOptions
+    ? Required<AddListenerOptions> & {
+        priority: (typeof EVENT_TYPES_PRIORITIES)[number];
+      }
+    : Type extends 'removed listener'
+      ? { priority: (typeof EVENT_TYPES_PRIORITIES)[number] }
+      : Type extends 'dispatched'
+        ? unknown
         : undefined,
 ) => void;
 
-export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
+export class CustomEventEmitter<
+  EventMaps extends Record<string, DefaultEventData>,
+> {
   protected debugListeners?: Set<EventDebugListener>;
 
   protected events = {} as {
@@ -97,21 +98,29 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
       dispatchable: boolean;
       destructed: boolean;
 
-      prepare?<Event extends EventObject>(
+      prepare?<Event extends DefaultEventData>(
         value: Event['dispatchValue'],
       ): Event['listenerValue'];
 
       listeners: {
-        [type in EventListenerType]?: Map<
+        [type in (typeof EVENT_TYPES_PRIORITIES)[number]]: Set<
+          (value: any) => void
+        >;
+      } & {
+        all: Map<
           (value: any) => void,
-          { isOnce: boolean; listener(value: any): void }
+          {
+            isOnce: boolean;
+            listener(value: any): void;
+            priority: (typeof EVENT_TYPES_PRIORITIES)[number];
+          }
         >;
       };
     };
   };
 
   constructor(events: {
-    [name in keyof EventMaps]-?: EventConstructorEventObject<EventMaps[name]>;
+    [name in keyof EventMaps]-?: ConstructorEventData<EventMaps[name]>;
   }) {
     const appError = new AppError();
 
@@ -122,6 +131,7 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
         listener,
         lockSymbol,
         prepare,
+        prepend,
       } = events[name];
 
       let hasError = false;
@@ -150,7 +160,7 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
       if (!hasError) {
         this.events[name] = {
           prepare,
-          listeners: {},
+          listeners: { all: new Map(), normal: new Set(), prepend: new Set() },
           destructed: false,
           destructible,
           dispatchable,
@@ -159,6 +169,10 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
         if (listener)
           if (typeof listener === 'function') this.addListener(name, listener);
           else this.addListener(name, listener.listener, listener.options);
+        if (prepend)
+          if (typeof prepend === 'function')
+            this.prependListener(name, prepend);
+          else this.prependListener(name, prepend.listener, prepend.options);
       }
     });
 
@@ -195,7 +209,9 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
       );
 
     setTimeout(() => {
-      event.listeners = {};
+      event.listeners.all.clear();
+      event.listeners.normal.clear();
+      event.listeners.prepend.clear();
       event.destructed = true;
       event.prepare = undefined;
       if (this.debugListeners)
@@ -212,35 +228,71 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
     else this.debugListeners.add(listener);
   }
 
-  addListener<Name extends keyof EventMaps>(
-    name: Name,
-    listener: (value: EventMaps[Name]['listenerValue']) => void,
-    listenerOptions?: EventListenerOptions,
-  ) {
-    if (!this.hasEvent(name)) this.throwInvalidEventNameAction(name, 'add');
+  protected insertListenerPriority({
+    name,
+    listener,
+    listenerOptions,
+    priority,
+  }: {
+    name: keyof EventMaps;
+    listener: (value: any) => void;
+    listenerOptions?: AddListenerOptions;
+    priority: (typeof EVENT_TYPES_PRIORITIES)[number];
+  }) {
+    if (!this.hasEvent(name))
+      this.throwInvalidEventNameAction(
+        name,
+        priority === 'normal' ? 'add' : 'prepend',
+      );
 
     const event = this.events[name];
 
-    if (event.destructed) return this;
+    if (event.destructed) return;
 
-    const listenerType = listenerOptions?.type ?? 'normal';
-    const listenerObject = { isOnce: !!listenerOptions?.once, listener };
-    const listenerMap = event.listeners[listenerType];
+    const listenerObject = {
+      isOnce: !!listenerOptions?.once,
+      listener,
+      priority,
+    };
 
-    if (listenerMap) {
-      listenerMap.set(listener, listenerObject);
-    } else {
-      event.listeners[listenerType] = new Map([[listener, listenerObject]]);
-    }
+    event.listeners[priority].add(listener);
+    event.listeners.all.set(listener, listenerObject);
 
     if (this.debugListeners) {
       this.debugListeners.forEach((debugListener) =>
         debugListener(name.toString(), 'added listener', {
-          type: listenerType,
+          priority,
           once: listenerObject.isOnce,
         }),
       );
     }
+  }
+
+  prependListener<Name extends keyof EventMaps>(
+    name: Name,
+    listener: (value: EventMaps[Name]['listenerValue']) => void,
+    listenerOptions?: AddListenerOptions,
+  ) {
+    this.insertListenerPriority({
+      name,
+      listener,
+      listenerOptions,
+      priority: 'prepend',
+    });
+    return this;
+  }
+
+  addListener<Name extends keyof EventMaps>(
+    name: Name,
+    listener: (value: EventMaps[Name]['listenerValue']) => void,
+    listenerOptions?: AddListenerOptions,
+  ) {
+    this.insertListenerPriority({
+      name,
+      listener,
+      listenerOptions,
+      priority: 'normal',
+    });
 
     return this;
   }
@@ -271,10 +323,11 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
         debugListener(name.toString(), 'dispatched', dispatchedValue),
       );
 
-    EVENT_LISTENER_TYPES_PRIORITIES.forEach((priority) => {
-      event.listeners[priority]?.forEach(({ listener, isOnce }) => {
+    EVENT_TYPES_PRIORITIES.forEach((priority) => {
+      event.listeners[priority]?.forEach((listener) => {
         listener(dispatchedValue);
-        if (isOnce) this.removeListener(name, listener, { type: priority });
+        const listenerData = event.listeners.all.get(listener);
+        if (listenerData?.isOnce) this.removeListener(name, listener);
       });
     });
 
@@ -284,7 +337,6 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
   removeListener<Name extends keyof EventMaps>(
     name: Name,
     listener: (value: EventMaps[Name]['listenerValue']) => void,
-    options?: EventRemoveListenerOptions,
   ) {
     if (!this.hasEvent(name))
       this.throwInvalidEventNameAction(
@@ -293,24 +345,25 @@ export class CustomEventEmitter<EventMaps extends Record<string, EventObject>> {
         ', because it does not exist',
       );
 
-    const listenerType = options?.type ?? 'normal';
+    const allListeners = this.events[name].listeners.all;
 
-    const status =
-      this.events[name].listeners[listenerType]?.delete(listener) || false;
+    if (this.debugListeners) {
+      const listenerData = allListeners.get(listener);
+      const status = allListeners.delete(listener);
+      if (listenerData && status)
+        this.debugListeners.forEach((debugListener) =>
+          debugListener(name.toString(), 'removed listener', {
+            priority: listenerData.priority,
+          }),
+        );
+    } else allListeners.delete(listener);
 
-    if (status && this.debugListeners) {
-      this.debugListeners.forEach((debugListener) =>
-        debugListener(name.toString(), 'removed listener', {
-          type: listenerType,
-        }),
-      );
-    }
     return this;
   }
 
   protected throwInvalidEventNameAction(
     name: keyof EventMaps,
-    action: 'add' | 'remove' | 'dispatch' | 'destruct',
+    action: 'add' | 'prepend' | 'remove' | 'dispatch' | 'destruct',
     reason = '',
   ) {
     AppError.throw<EventErrorTypes>(
