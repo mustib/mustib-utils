@@ -1,0 +1,320 @@
+---
+title: CustomEventEmitter
+description: A class that allows you to emit and listen to custom events.
+---
+
+import { Aside, Badge, Code } from '@astrojs/starlight/components';
+
+<Badge text="Type" />: `class`
+
+The **`CustomEventEmitter`** class provides a mechanism to emit and listen to custom events in your application. It supports adding, removing, and dispatching events with options for one-time listeners, event preparation, and debugging. The class enforces rules for destructible and non dispatchable events using lock symbols, ensuring robust event management and error handling.
+
+## Usage
+```ts
+import { CustomEventEmitter, type EventData } from '@mustib/utils';
+
+type Events = {
+  eventName: EventData<string>;
+};
+
+new CustomEventEmitter<Events>({eventName: {}})
+.addListener('eventName', console.log) // 'value'
+.dispatch('eventName', 'value');
+```
+
+## Definition
+```ts
+export class CustomEventEmitter<EventMaps extends Record<string, DefaultEventData>> {}
+```
+
+### Generics
+- `EventMaps` - a record of event names and their corresponding [event data](#event-data)
+
+## Constructor()
+```ts
+type CustomEventEmitter = new (events: {
+    [name in keyof EventMaps]-?: ConstructorEventData<EventMaps[name]>;
+  })
+```
+
+- parameters
+    1. `events` - a record of event names and their corresponding [event data](#constructoreventdata)
+
+## Properties
+
+### debugListeners
+<Badge text='visibility'/>: `protected`
+
+<Badge text='Type' />: `Set<EventDebugListener> | undefined`
+
+<Badge text='default' />: `undefined`
+
+This property holds a set of all debug listeners added to the event emitter.
+
+### events
+<Badge text='visibility'/>: `protected`
+
+```ts
+type events = {
+    [name: string | number | symbol]: {
+      lockSymbol?: symbol;
+      destructible: boolean;
+      dispatchable: boolean;
+      destructed: boolean;
+
+      prepare?<Event extends DefaultEventData>(
+        value: Event['dispatchValue'],
+      ): Event['listenerValue'];
+
+      listeners: {
+        normal: Set<(value: any) => void>;
+        prepend: Set<(value: any) => void>;
+        all: Map<(value: any) => void, {
+          isOnce: boolean;
+          listener(value: any): void;
+          priority: 'normal' | 'prepend';
+          }
+        >;
+      };
+    };
+}
+```
+
+This property holds a record of all events added to the event emitter, with their corresponding details, where listeners are grouped by priority (normal and prepend) and stored in the `normal` and `prepend` sets, respectively. Additionally, all listeners are stored in the `all` map with their details, allowing for efficient lookups and removals.
+
+## Methods
+
+<div id='add-or-prepend-listener'> 
+###  addListener()
+###  prependListener()
+</div>
+<Badge text='visibility'/>: `public`
+```ts
+type addOrPrependListener = <Name extends keyof EventMaps>(
+  name: Name,
+  listener: (value: EventMaps[Name]['listenerValue']) => void,
+  listenerOptions?: {
+    once?: boolean;
+  }
+) => this;
+```
+
+This method adds or prepends a new listener to an event
+
+- `parameters`
+    1. `name` - the name of the event to add or prepend the listener to
+    2. `listener` - the listener function to add or prepend
+        - it will be called after the event is dispatched
+        - `parameters:`
+            1. `value` - the return value of the `prepare` method if it exists, otherwise the value passed to the `dispatch` method
+        - `returns`: void
+    3. `listenerOptions`
+        - <code id='once-listener-option'>once</code>: a boolean indicating whether or not the listener should be removed after it is called once
+
+- `returns`: this
+
+### removeListener()
+
+<Badge text='visibility'/>: `public`
+
+```ts
+type removeListener<Name extends keyof EventMaps> = (
+  name: Name,
+  listener: (value: EventMaps[Name]['listenerValue']) => void,
+) => this;
+```
+This method removes a listener from an event
+
+- `parameters`
+    1. `name` - the name of the event to remove the listener from
+    2. `listener` - the listener function to remove
+
+- `returns`: this
+
+### hasEvent()
+
+<Badge text='visibility'/>: `protected`
+
+```ts
+type hasEvent = (name: keyof EventMaps) => boolean;
+```
+
+This method checks if an event exists
+
+- `parameters`
+    1. `name` - the name of the event to check
+
+- `returns`: boolean
+
+
+### dispatch()
+
+<Badge text='visibility'/>: `public`
+
+```ts
+type dispatch = <Name extends keyof EventMaps>(
+  name: Name,
+  value: EventMaps[Name]['dispatchValue'],
+  options?: { lockSymbol: symbol }
+) => void;
+```
+
+This method dispatches an event
+
+- `parameters`
+    1. `name` - the name of the event to dispatch
+    2. <span id='dispatch-value'>`value`</span> - the value to pass to the [prepare](#prepare) method if it exists, otherwise to the event listener
+    3. `options`
+        - `lockSymbol`: a symbol that will be used to unlock the event.
+
+- `returns`: this
+
+<Aside type='note'>
+Dispatching a [non-dispatchable](#dispatchable) event requires the same [lockSymbol](#locksymbol) that was provided to the event during construction; otherwise, an error will be thrown.
+</Aside>
+
+### destruct()
+
+<Badge text='visibility'/>: `public`
+
+```ts
+type destruct = <Name extends keyof EventMaps>(
+  name: Name,
+  lockSymbol: EventMaps[Name]['destructible'] extends true ? symbol : never,
+) => this;
+```
+
+This method destructs an event
+
+- `parameters`
+    1. `name` - the name of the event to destruct
+    2. `lockSymbol` - a symbol that will be used to unlock the event.
+
+- `returns`: this
+
+<Aside type='note' title='Notes'>
+- Destructing a [non-destructible](#destructible) event will throw an error.
+- Using the wrong [lockSymbol](#locksymbol) will throw an error.
+</Aside>
+
+
+### debug()
+
+<Badge text='visibility'/>: `public`
+
+```ts
+type DebugOperations = 'added listener' | 'prepended listener' | 'removed listener' | 'dispatched' | 'destructed';
+type EventDebugListener = (eventName: string, operationType: DebugOperations, details?: any) => void;
+type debug = (listener: EventDebugListener) => this;
+```
+
+This method adds a debug listener to the event emitter.
+
+- `parameters`
+    1. `listener` - a function that will be called for various event operations
+        - `parameters`
+            1. `eventName` - the name of the event
+            2. `operationType` - the type of operation that was performed
+            3. `details` - additional details about the operation
+
+- `returns`: this
+
+<Aside type='tip' title='Debug Listener Details'>
+Details will be:
+- `{ once: boolean }`: if the operation is `added listener` or `prepended listener`, indicating whether the listener was added with the [once listener option](#once-listener-option).
+
+- `{priority: 'normal' | 'prepend'}`: if the operation is `removed listener`
+  - priority will be:
+    - `'prepend'` if the removed listener was added with [prepend method](#prependlistener)
+    - `'normal'` if the removed listener was added with [addListener method](#addlistener)
+
+- the [dispatched value](#dispatch-value): if the operation is `dispatched`.
+
+- `undefined`: if the operation is `destructed`.
+</Aside>
+
+### insertListenerPriority()
+
+<Badge text='visibility'/>: `protected`
+
+```ts
+type insertListenerPriority = <Name extends keyof EventMaps>(
+  options: {
+    name: keyof EventMaps;
+    listener: (value: any) => void;
+    listenerOptions?: AddListenerOptions;
+    priority: 'normal' | 'prepend';
+  }
+) => void;
+```
+
+This method is used by the [addListener](#addlistener) and [prependListener](#prependlistener) methods to insert a listener at a specific priority.
+
+- `parameters`: an object with the same properties as the [addListener](#addlistener) and [prependListener](#prependlistener) methods, except for `priority`, which is set to `'normal'` if the method is `addListener` and `'prepend'` if the method is `prependListener`.
+
+- `returns`: void
+
+## Event Data
+```ts
+type EventData<
+  ListenerValue = any,
+  DispatchValue = ListenerValue,
+  Dispatchable = true,
+  Destructible = false,
+> = {
+  listenerValue: ListenerValue;
+  dispatchValue: DispatchValue;
+  dispatchable: Dispatchable;
+  destructible: Destructible;
+};
+```
+
+A utility type that simplifies defining event data.
+
+- ### ListenerValue
+    - the type of the value passed to the event listener
+- ### DispatchValue
+    - the type of the value passed to the `dispatch` method
+    - it is defaulted to `ListenerValue` so you don't have to specify it if your event just passes the same value to the listener and the `dispatch` method.
+- ### Dispatchable
+    - a boolean indicating whether the event can be dispatched
+- ### Destructible
+    - a boolean indicating whether the event can be destructed
+
+<Aside type='note' title='Note'>
+In most cases you will only need to specify `ListenerValue`
+</Aside>
+
+## ConstructorEventData
+```ts
+type ConstructorEventData = {
+  [key in 'listener' | 'prepend']?: 
+    (value: Event['listenerValue']) => void
+    | { 
+        options: ListenerOptions;
+        listener: (value: Event['listenerValue']) => void
+      };
+  prepare?: (value: Event['dispatchValue']) => Event['dispatchValue'];
+  dispatchable?: boolean;
+  destructible?: boolean;
+  lockSymbol?: symbol;
+}
+```
+- ### Listener or Prepend
+    - a function that will be added as a listener or an object that contains a listener function and it's options.
+    - it can be used to add or prepend a listener at initialization time.
+    - see [add or prepend listener](#add-or-prepend-listener) for more details
+
+- ### Prepare
+    - a function that transforms the dispatched value before it is passed to the listener.
+    - it is required if the type of the [dispatched value](#dispatchvalue) is different from the type of the [value](#listenervalue) expected by the listener.
+
+- ### Dispatchable
+    - a boolean indicating whether the event can be dispatched.
+
+- ### Destructible
+    - a boolean indicating whether the event can be destructed.
+
+- ### LockSymbol
+    - a symbol that will be used to unlock the event.
+    - it is required if the event is destructible or non dispatchable.
