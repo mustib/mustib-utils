@@ -1,8 +1,8 @@
 import { assert, describe, expect, it } from 'vitest';
 
-import { AppError } from '../AppError';
+import { AppError } from '../../AppError';
 
-import { timeUnits, timeUnitsOrder } from './constants';
+import { timeUnits, timeUnitsOrder } from '../constants';
 
 import { stringFromMilliseconds } from '.';
 

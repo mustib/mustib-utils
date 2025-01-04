@@ -1,8 +1,7 @@
-import { AppError } from '../AppError';
+import { AppError } from '../../AppError';
 
-import { timeUnits, type TimeUnits } from './constants';
-
-type Options = { separator?: string };
+import { timeUnits, type TimeUnits } from '../constants';
+import type { Options } from './Options';
 
 export function millisecondsFromString(
   string: TimeUnits,

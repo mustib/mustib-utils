@@ -1,18 +1,24 @@
-import { AppError } from '../AppError';
+import { AppError } from '../../AppError';
 
 import {
   timeUnitsOrder,
   timeUnits,
-  type TimeUnits,
-  type Unit,
   type TimeUnit,
-} from './constants';
+  type TimeUnits,
+  type TimeUnitsNames,
+} from '../constants';
+
+type Options = {
+  /**
+   * Specifies the largest time unit to be included in the string representation, starting from y to ms.
+   * @default 'y'
+   */
+  maxUnit: TimeUnitsNames;
+};
 
 export function stringFromMilliseconds(
   milliseconds: number,
-  options?: {
-    maxUnit: Unit;
-  },
+  options?: Options,
 ): TimeUnits {
   if (typeof milliseconds !== 'number' || Number.isNaN(milliseconds))
     return '0ms';

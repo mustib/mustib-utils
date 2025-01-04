@@ -1,6 +1,6 @@
-export type Unit = (typeof timeUnitsOrder)[number];
+export type TimeUnitsNames = (typeof timeUnitsOrder)[number];
 
-export type TimeUnit = `${number}${Unit}`;
+export type TimeUnit = `${number}${TimeUnitsNames}`;
 
 export type TimeUnits = TimeUnit | `${TimeUnit}:${TimeUnit}`;
 

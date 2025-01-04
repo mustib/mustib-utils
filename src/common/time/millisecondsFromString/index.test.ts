@@ -1,10 +1,10 @@
 import { assert, describe, expect, it } from 'vitest';
 
-import { AppError } from '../AppError';
+import { AppError } from '../../AppError';
 
-import { timeUnits, timeUnitsOrder, type TimeUnits } from './constants';
+import { timeUnits, timeUnitsOrder, type TimeUnits } from '../constants';
 
-import { millisecondsFromString } from './millisecondsFromString';
+import { millisecondsFromString } from '.';
 
 describe('millisecondsFromString', () => {
   it('should return 0 when the input unit value is 0', () => {
