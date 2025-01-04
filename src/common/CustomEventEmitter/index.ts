@@ -30,14 +30,7 @@ export type EventDispatchParams<
   : [Name, Event['dispatchValue']];
 
 type ConstructorEventData<Event extends DefaultEventData> = {
-  listener?:
-    | ((value: Event['listenerValue']) => void)
-    | {
-        listener: (value: Event['listenerValue']) => void;
-        options: AddListenerOptions;
-      };
-
-  prepend?:
+  [key in 'listener' | 'prepend']?:
     | ((value: Event['listenerValue']) => void)
     | {
         listener: (value: Event['listenerValue']) => void;
@@ -70,15 +63,14 @@ export type EventDebugListener = <
   Type extends
     | 'destructed'
     | 'added listener'
+    | 'prepended listener'
     | 'removed listener'
     | 'dispatched',
 >(
   eventName: string,
   operationType: Type,
-  details: Type extends 'added listener'
-    ? Required<AddListenerOptions> & {
-        priority: (typeof EVENT_TYPES_PRIORITIES)[number];
-      }
+  details: Type extends 'added listener' | 'prepended listener'
+    ? Required<AddListenerOptions>
     : Type extends 'removed listener'
       ? { priority: (typeof EVENT_TYPES_PRIORITIES)[number] }
       : Type extends 'dispatched'
@@ -260,10 +252,13 @@ export class CustomEventEmitter<
 
     if (this.debugListeners) {
       this.debugListeners.forEach((debugListener) =>
-        debugListener(name.toString(), 'added listener', {
-          priority,
-          once: listenerObject.isOnce,
-        }),
+        debugListener(
+          name.toString(),
+          `${priority === 'prepend' ? 'prepended' : 'added'} listener`,
+          {
+            once: listenerObject.isOnce,
+          },
+        ),
       );
     }
   }
