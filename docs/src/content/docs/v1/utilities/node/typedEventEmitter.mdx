@@ -1,0 +1,33 @@
+---
+title: TypedEventEmitter
+description: A type-only event emitter for Node.js, allowing you to create an event emitter with a typed events
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="Type" />: `type-only`
+
+The **`TypedEventEmitter`** is a type-only utility for creating an event emitter with a strongly typed interface in Node.js. It allows you to define the name of the events and their associated data types, making it easier to handle and manage events in your code.
+
+## Usage
+```ts
+import { EventEmitter } from 'node:events';
+
+type MyEvents = {
+  'success': undefined;
+  'fail': {message: string, code: number};
+};
+
+const emitter = new EventEmitter() as TypedEventEmitter<MyEvents>;
+
+emitter.on('success', () => {
+  console.log('success');
+});
+
+emitter.on('fail', ({ message, code }) => {
+  console.log(message, code);
+});
+
+emitter.emit('success', undefined);
+emitter.emit('fail', { message: 'error', code: 500 });
+```
