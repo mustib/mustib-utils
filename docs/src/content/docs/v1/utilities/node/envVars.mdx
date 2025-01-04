@@ -1,0 +1,257 @@
+---
+title: EnvVars
+description: A versatile utility for handling environment variables
+---
+import { Aside, Code, Badge, Steps } from '@astrojs/starlight/components';
+
+<Badge text="Type" />: `class`
+
+The `EnvVars` class is a versatile utility designed for type-safe access to environment variables. It simplifies handling environment variables by offering features such as type parsing, retrieving values tailored to specific environments, reading from various sources, and marking variables as dynamic. Additionally, it ensures robust error handling, preventing your application from proceeding with unexpected behavior when issues arise.
+
+**Imagine the following scenario:**
+```ts
+let PORT = +(process.env.PORT || 3000);
+let HOST = process.env.HOST || 'localhost';
+if (process.env.NODE_ENV === 'production') {
+  PORT = +process.env.PRODUCTION_PORT || throw new Error('Missing production port');
+  HOST = process.env.PRODUCTION_HOST || throw new Error('Missing production host');
+}
+```
+This code snippet can become cumbersome to write, maintain, and debug, especially when you have multiple environments and the same variable is used in different places throughout your app.
+The `EnvVars` class makes this code much easier to read and maintain, while also providing additional features and robust error handling.
+
+**Let's take a look at how it works:**
+<Steps>
+1. Imagine your process.env object looks like this:
+    ```ts
+    {
+      PORT: 3000,
+      PRODUCTION_PORT: 5000,
+    }
+    ```
+2. Create an `envVars.ts` file:<br/>
+    ```ts
+    export const envVars = new EnvVars({
+      mapObj: {
+        port: {
+          parseAs: 'number',
+          whenNodeEnvIs: {
+              production: 'PRODUCTION_PORT',
+              anyEnv: 'PORT',
+            }
+        },
+        host: {
+          whenNodeEnvIs: {
+              production: 'PRODUCTION_HOST',
+              anyEnv: 'HOST',
+            }
+        }
+      }
+    });
+    ```
+3. `EnvVars` takes care of everything by selecting the appropriate value for the current environment, converting it to the correct type, marking it as dynamic if necessary, and handling any errors.<br/>
+Then you can use the previous `envVars.ts` file in your code as follows:<br/>
+    ```ts
+    import { envVars } from './envVars';
+    const {port, host} = envVars;
+    console.log(port, host); // process.env.NODE_ENV === 'production' ? {port: 5000} : {port: 3000}
+    ```
+</Steps>
+
+
+## Full Example
+<Code title='.env' lang='text' code={`
+SECRET_VALUES=1,2,3,4
+`}/>
+
+```ts
+// envVars.ts
+import { EnvVars } from '@mustib/utils/node';
+
+export const fromObject = {
+  PORT: '3000',
+}
+
+export const envVars = new EnvVars({
+  useDynamicValues: true,
+  enumerable: true,
+  sources: {
+    fromFile: 'path to .env file',
+    fromObject,
+    fromDynamicFunction: () => ({
+      HOST: 'localhost',
+    })
+  },
+  mapObj: {
+    port: {
+      parseAs: 'number',
+      whenNodeEnvIs: {
+          anyEnv: 'PORT',
+      }},
+    host: {
+      whenNodeEnvIs: {
+          anyEnv: 'HOST',
+      }},
+    secretValues: {
+      parseAs(data) {
+        const values = data.varValueForCurrentEnv.split(',');
+        return data.currentEnv !== 'test' ? values : values.reverse();
+      },
+      whenNodeEnvIs: {
+        anyEnv: 'SECRET_VALUES',
+      }
+    }
+  }
+})
+```
+```ts
+// app.ts
+import { envVars, fromObject } from './envVars';
+
+console.log(envVars) // { port: 3000, host: 'localhost', secretValues: [ '1', '2', '3', '4' ] }
+
+fromObject.PORT = '5000'
+console.log(envVars) // { port: 5000, host: 'anywhere.com', secretValues: [ '1', '2', '3', '4' ] }
+
+console.log(Object.keys(envVars)) // [ 'port', 'host', 'secretValues' ]
+```
+<Aside type='note' title='Important Notes'>
+In the `app.ts` file we were able to:
+1. get dynamic values for `port` because we passed `useDynamicValues: true`; otherwise, all values will be static.
+2. enumerate the `envVars` object keys because we passed `enumerable: true`; otherwise, it will not be enumerable.
+</Aside>
+
+## Constructor()
+```ts
+type EnvVars = new (options: ConstructorParams<EnvVarsMapObj>): EnvVars
+```
+
+- `parameters` an object with the following properties:
+    - `useDynamicValues:`
+        - A `boolean` indicates whether the generated env object should be dynamic or not.
+        - Defaults to `false`.
+
+    - <code id='constructor-sources'>sources</code>: Used to define the source of environment variables, which can be one of the following:
+        - A `string` representing the path to a `.env` file
+        - A single [EnvVarsSourcesObj](#envvarssourcesobj) object, or an array of such objects.
+      <Aside title='Notes' type='note'>
+        - Passing a `string` is equivalent to passing an [EnvVarsSourcesObj](#envvarssourcesobj) object with the following shape: `{ fromFile: string }`.
+        
+        - `undefined` is equivalent to passing an [EnvVarsSourcesObj](#envvarssourcesobj) object with the following shape: `{ fromObject: process.env }`.
+      </Aside>
+      
+    - `mapObj:` [EnvVarsMapObj](#envvarsmapobj)
+
+    - `currentEnv:`
+      - a `string` representing the current env.
+      - defaults to `process.env.NODE_ENV`.
+
+    - `enumerable:` 
+        - a `boolean` indicates whether the generated env object should be enumerable or not.
+        - defaults to `false`.
+
+
+## EnvVarsMapObj
+```ts
+type EnvVarsMapObj = {
+  [varName: string]: {
+    parseAs?: ParseAsString | ParseAsFunction
+    whenNodeEnvIs: {
+      [envName: string | 'anyEnv']: string
+    }
+    useDynamicValue?: boolean
+  }
+}
+```
+
+An object with variable names as keys and their configuration as object with the following properties:
+
+- `parseAs:` used to convert the value of the env-var from string to the specified type, possible values are:
+    1. A `string` with the value of `"string"`, `"number"`, `"bool"`, `"date"` where each value corresponds to a predefined [`parseAsFunction`](#parseasfunction).
+    2. A user-defined function whose return value determines the value and type of the environment variable.
+      - see [parseAsFunction](#parseAsFunction) for more details.
+
+- `whenNodeEnvIs:` an object defining the environment variables that should be used for each environment.
+    - see [whenNodeEnvIs](#whenNodeEnvIs) for more details.
+
+- `useDynamicValue:` a `boolean` indicates if the value is dynamic and will be parsed again every time it is needed
+
+
+
+## EnvVarsSourcesObj
+```ts
+type EnvVarsSourcesObj = {
+  fromFile: string;
+  fromObject: Record<string, string>;
+  fromDynamicFunction(): Record<string, string>;
+};
+```
+
+An object that represents a source of environment variables with the following properties:
+
+- `fromFile:` A `string` representing the path to a `.env` file.
+- `fromObject:` An object with environment variables.
+- `fromDynamicFunction:` A function that returns an object with environment variables.
+
+<Aside title='Important Notes' type='note'>
+- Each source in the `sources` array should resolve to an object with environment variables, where the keys are the variable names and the values are their corresponding values.
+
+- All sources will be combined into a single array, where each source represents an object of environment variables. This allows for defining environment variables in multiple places and combining them into a single object.
+
+- The combined array of sources is utilized to retrieve the variable value for the current environment. This array is then passed to the [`parseAsFunction`](#parseasfunction) as `combinedEnvVars`.
+
+- The first source from the combined array that has the current variable name for the current environment will be passed to the `parseAsFunction` as `assignedSource` and the variable name will be passed as `varNameForCurrentEnv` and it's value will be passed as `varValueForCurrentEnv`.
+
+- An error will be thrown if:
+1. `fromFile` is not a valid string, cannot be read as a file, or contains an empty variable name.
+2. `fromObject` is not a valid object.
+3. `fromDynamicFunction` is not a valid function or returns a non-object value.
+4. Any variable value is not a string.
+</Aside>
+
+
+## parseAsFunction
+```ts
+type ParseAsFunction = (data: {
+  combinedEnvVars: Record<string, string>[];
+  varValueForCurrentEnv: string;
+  currentEnv: string;
+  assignedSource: Record<string, string>;
+  varNameForCurrentEnv: string;
+}) => any
+```
+
+A user-defined function whose return value determines the value and type of the environment variable.
+
+It will be called with a `data` object with the following properties:
+
+- `combinedEnvVars:` an array of objects, each representing a source defined in the `EnvVars` constructor's [sources](#constructor-sources).
+
+- `varValueForCurrentEnv:` the value of the varNameForCurrentEnv in assignedSource object.
+
+- `currentEnv:` the current environment (the keys of the [`whenNodeEnvIs`](#whenNodeEnvIs) object).
+
+- `assignedSource:` the first object from combinedEnvVars that has the varNameForCurrentEnv
+
+- `varNameForCurrentEnv:` the name of the environment variable for the current environment (the value of the currentEnv from the [`whenNodeEnvIs`](#whenNodeEnvIs) object).<br/>
+**For example:**<br/>
+  if `whenNodeEnvIs` has this value:
+  ```ts
+    const whenNodeEnvIs = {
+      production: 'Prod_VAR',
+      anyEnv: 'ANY_VAR',
+    };
+  ```
+
+  then the `varNameForCurrentEnv` will be `Prod_VAR` for `production` and `ANY_VAR` for `anyEnv`
+
+## whenNodeEnvIs
+```ts
+type WhenNodeEnvIs = Record<string | 'anyEnv', string>
+```
+An object where the keys are possible environment names and the values are any valid key from combined [sources](#constructor-sources) object passed to the `EnvVars` constructor.
+
+For example, if the environment is `production`, the value of the key `production` will be used. If the environment is `development`, the value of the key `development` will be used, and so on. If sources has `PORT` and `HOST` as variables, then possible values for the `whenNodeEnvIs` object are `PORT` and `HOST`.
+
+The special key `anyEnv` can be used to specify a fallback value for any environment. This is useful when you want to provide a default value for an environment variable that is not defined in the current environment.
+
