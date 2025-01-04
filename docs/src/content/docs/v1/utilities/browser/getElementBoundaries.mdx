@@ -1,0 +1,45 @@
+---
+title: getElementBoundaries
+description: A function that calculates the boundaries and visibility of a DOM element.
+---
+
+import { Badge, Code } from '@astrojs/starlight/components';
+
+<Badge text="Type" />: `function`
+
+The `getElementBoundaries` function determines a DOM element's position and visibility within the viewport. It provides comprehensive details about whether the element is partially or fully visible.
+
+## Usage
+```ts
+import { getElementBoundaries } from '@mustib/utils/browser';
+
+const element = document.getElementById('my-element');
+const boundaries = getElementBoundaries(element);
+
+console.log(boundaries);
+```
+
+## Definition
+```ts
+type getElementBoundaries = (element: HTMLElement) => ElementBoundaries
+```
+
+- `parameters:`
+  - `element`: The DOM element to calculate the boundaries of.
+
+- `returns:` An object with the following properties:
+  - `elementTop`: The top position of the element in the viewport.
+  - `elementBottom`: The bottom position of the element in the viewport.
+  - `elementLeft`: The left position of the element in the viewport.
+  - `elementRight`: The right position of the element in the viewport.
+  - `width`: The width of the element.
+  - `height`: The height of the element.
+  - `isTopVisible`: A boolean indicating whether the element is at least partially visible from the top of the viewport.
+  - `isTopFullyVisible`: A boolean indicating whether the element's top edge is fully visible from the top of the viewport, and both its left and right edges are fully within the viewport.
+  - `isBottomVisible`: A boolean indicating whether the element is at least partially visible from the bottom of the viewport.
+  - `isBottomFullyVisible`: A boolean indicating whether the element's bottom edge is fully visible from the bottom of the viewport, and both its left and right edges are fully within the viewport.
+  - `isLeftVisible`: A boolean indicating whether the element is at least partially visible from the left of the viewport.
+  - `isLeftFullyVisible`: A boolean indicating whether the element's left edge is fully visible from the left of the viewport, and both its top and bottom edges are fully within the viewport.
+  - `isRightVisible`: A boolean indicating whether the element is at least partially visible from the right of the viewport.
+  - `isRightFullyVisible`: A boolean indicating whether the element's right edge is fully visible from the right of the viewport, and both its top and bottom edges are fully within the viewport.
+  - `isFullyVisible`: A boolean indicating whether the element is fully visible within the viewport, meaning it is visible from all sides.
