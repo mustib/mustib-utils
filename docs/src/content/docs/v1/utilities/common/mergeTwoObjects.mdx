@@ -1,0 +1,36 @@
+---
+title: mergeTwoObjects
+description: Merges two objects
+---
+
+import { Aside, Badge, Code } from '@astrojs/starlight/components';
+
+<Badge text="Type" />: `function`
+
+This function merges two objects at a deep level by cloning properties from the source object to the target object.
+
+## Usage
+```ts
+import { mergeTwoObjects } from '@mustib/utils';
+
+const target = { a: 1, b: { c: 2 } };
+const source = { b: { d: 3 }, e: 4 };
+const result = mergeTwoObjects(target, source);
+console.log(result); // { a: 1, b: { c: 2, d: 3 }, e: 4 }
+```
+
+## Definition
+```ts
+export function mergeTwoObjects<Target, Source>(
+  target: Target,
+  source: Source,
+  shouldMutateTarget = false,
+): MergeObjects<Target, Source> {}
+```
+
+- `parameters:`
+    1. `target` - the target object to merge to
+    2. `source` - the source object to merge from
+    3. `shouldMutateTarget` - a boolean indicating whether to create a new object or mutate the target object (defaults to false)
+
+- `returns:` - the merged object or the source object if either the target or source is not an object
