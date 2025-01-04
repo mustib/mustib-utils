@@ -1,0 +1,60 @@
+---
+title: stringFromMilliseconds
+description: A function that returns a string representation of a number of milliseconds.
+---
+
+import { Aside, Badge, Code } from '@astrojs/starlight/components';
+import {getUtilityUrl} from '../getUtilityUrl'
+
+<Badge text="Type" />: `function`
+
+A function that returns a string representation of a number of milliseconds.
+
+## Usage
+```ts
+console.log(stringFromMilliseconds(1000)); // 1s
+console.log(stringFromMilliseconds(1000), { maxUnit: 'ms' }); // 1000ms
+```
+
+## Definition
+```ts
+export function stringFromMilliseconds(
+  milliseconds: number,
+  options?: Options,
+): TimeUnits {}
+```
+
+- `parameters:`
+  1. `milliseconds:` number
+      - The number of milliseconds to convert to a string.
+  2. `options:` An object with the following properties:
+      - `maxUnit:`
+          - The largest time unit to be included in the string representation.
+          - It's value should be one of the following: `ms`, `s`, `m`, `h`, `d`, `w`, `mo`, `y`.
+          - See [Units and their Values](#units-and-their-values).
+
+- `returns:` [TimeUnits](#timeunits)
+
+<Aside type='tip'>
+It's return value is a valid input for <a target="_blank" href={getUtilityUrl('common','millisecondsfromstring')}>millisecondsFromString</a>.
+</Aside>
+
+## Units and their Values
+| Unit | Description        |
+|------|--------------------|
+| y    | Year               |
+| mo   | Month              |
+| w    | Week               |
+| d    | Day                |
+| h    | Hour               |
+| m    | Minute             |
+| s    | Second             |
+| ms   | Millisecond        |
+
+## TimeUnits
+A string contains a number followed by one of the following units: `y`, `mo`, `w`, `d`, `h`, `m`, `s`, `ms` or a combination of them separated by `:`.
+
+### Examples
+```ts
+'1s' '1s:500ms' '1h:30m:45s'
+```
