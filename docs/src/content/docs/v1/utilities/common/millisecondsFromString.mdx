@@ -1,0 +1,36 @@
+---
+title: millisecondsFromString
+description: A function that returns a number of milliseconds from a string representation of time.
+---
+
+import { Aside, Badge, Code } from '@astrojs/starlight/components';
+import { getUtilityUrl } from '../getUtilityUrl'
+
+<Badge text="Type" />: `function`
+
+A function that returns a number of milliseconds from a string representation of time.
+
+## Usage
+```ts
+console.log(millisecondsFromString('1s')); // 1000
+console.log(millisecondsFromString('2s:500ms')); // 2500
+```
+
+## Definition
+```ts
+export function millisecondsFromString(
+  string: TimeUnits,
+  options?: Options,
+): number {}
+```
+
+- `parameters:`
+  1. `string:`
+      - The string representation of time to convert to milliseconds.
+      - See <a target="_blank" href={getUtilityUrl('common', 'stringfrommilliseconds', 'timeunits') }>TimeUnits</a> for more details.
+  2. `options:` An object with the following properties:
+      - `separator:`
+          - The separator between time units in the string
+          - Default is `:`.
+
+- `returns:` number
