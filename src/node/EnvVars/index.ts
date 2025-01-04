@@ -7,58 +7,15 @@ import {
   type UntypedObject,
 } from '../../common';
 
-type ParseAsString = 'date' | 'string' | 'number' | 'bool';
-
-type CombinedEnvVarsSources = Record<string, string>[];
-
-type ParseAsFunction = (data: {
-  /**
-   * all env vars combined from the provided sources as array of objects
-   */
-  combinedEnvVars: CombinedEnvVarsSources;
-  varValueForCurrentEnv: string;
-  currentEnv: string;
-  assignedSource: Record<string, string>;
-  varNameForCurrentEnv: string;
-}) => any;
-
-type EnvVarsMapObj = {
-  [key: string]: {
-    /**
-     * defines the type of the variable.
-     * parseAs must be a string with a value of ("string" | "number" | "date" | "bool") or a function that parses the value and returns it so it can be basically any type.
-     * if it is a function it will be called with an object of this shape { value: string, currentEnv: string, key: string, envVars: Record<string, string> }
-     */
-    parseAs?: ParseAsString | ParseAsFunction;
-
-    /**
-     * an object used to defines the variable name in the provided sources for the current env
-     * used to define the variable name in each env with the env name as the key and the variable name for that env as the value
-     * anyEnv key can be used to define the variable name for all other envs that are not defined in the object
-     */
-    whenNodeEnvIs: {
-      // eslint-disable-next-line @typescript-eslint/ban-types
-      [Env in (string & {}) | 'development' | 'production' | 'anyEnv']?: string;
-    };
-
-    /**
-     * a boolean indicates that the value is dynamic and will be parsed again every time it is needed.
-     * it only make sense to use it when parsedValue is dynamic and can be changed.
-     * parseAs function will be set as a getter method to the variable.
-     *
-     * @default false
-     */
-    useDynamicValue?: boolean;
-  };
-};
-
-type EnvSourcesObj = {
-  fromFile?: string;
-  fromObject?: UntypedObject;
-  fromDynamicFunction?: () => UntypedObject;
-};
-
-type EnvVarsSources = string | EnvSourcesObj | EnvSourcesObj[];
+import type {
+  EnvSourcesObj,
+  EnvVarsMapObj,
+  ParseAsFunction,
+  ConstructorParams,
+  ParseAsString,
+  EnvVarsSources,
+  CombinedEnvVarsSources,
+} from './types';
 
 type EnvVars = new <VarsMapObj extends EnvVarsMapObj = EnvVarsMapObj>(
   param: ConstructorParams<VarsMapObj>,
@@ -76,35 +33,6 @@ type EnvVars = new <VarsMapObj extends EnvVarsMapObj = EnvVarsMapObj>(
               ? ReturnType<Type>
               : string
     : never;
-};
-
-type ConstructorParams<VarsMapObj extends EnvVarsMapObj> = {
-  /**
-   * If true, it will be used as a global value for `mapObj.useDynamicValue` when its value is undefined.
-   * See {@link EnvVarsMapObj} for more information.
-   */
-  useDynamicValues?: boolean;
-
-  /**
-   * the sources of env vars, it can be a string containing .env file path or an object containing fromFile, fromObject and fromDynamicFunction or an array of that object
-   * defaults to { fromObject: process.env }
-   */
-  sources?: EnvVarsSources;
-
-  /**
-   * an object defines how the final env vars result will be, where the keys will be env vars names and the values will be an object type defines how their values will be in different envs
-   */
-  mapObj: VarsMapObj;
-
-  /**
-   * the current env, defaults to process.env.NODE_ENV
-   */
-  currentEnv?: string;
-
-  /**
-   * a boolean indicates whether the generated env object should be enumerable or not (defaults to false)
-   */
-  enumerable?: boolean;
 };
 
 function parseEnvFile(path: string) {
