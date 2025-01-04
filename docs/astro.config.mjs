@@ -10,6 +10,9 @@ export default defineConfig({
       social: {
         github: 'https://github.com/mustib/mustib-utils',
       },
+      expressiveCode: {
+        defaultProps: { wrap: true },
+      },
       sidebar: [
         {
           slug: 'start-guide/getting-started',
