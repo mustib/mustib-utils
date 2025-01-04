@@ -14,7 +14,7 @@
  * - 'invalid_date' if the value is an invalid Date object
  * - 'date' if the value is a valid Date object
  * - 'object' if the value is any other object
- * - 'unknown' if the value is of an unknown type
+ * - 'unknown' if the value type could not be determined
  */
 export function getTypeof(value: any) {
   const type = typeof value;
