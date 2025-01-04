@@ -1,0 +1,38 @@
+---
+title: parseJson
+description: A function that parses a string as JSON and returns the parsed value
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="Type" />: `function`
+
+This function simplifies parsing a string as JSON. It wraps the native `JSON.parse` function in a try-catch block to handle errors automatically. If the string cannot be parsed as JSON, it returns `undefined`; otherwise, it returns the parsed value.
+
+## Usage
+```ts
+type User = {
+  name: string;
+  email: string;
+}
+
+const user = parseJson<User>(userDataString);
+
+if (user) {
+  console.log(user) // { name: 'user name', email: 'user email' }
+} else {
+  console.log(user) // undefined
+}
+
+```
+
+## Definition
+```ts
+export function parseJson<T>(value: string): T | undefined {};
+```
+
+- `parameters:`
+  1. `value:` string
+      - The string to parse as JSON
+
+- `returns:` The parsed value, or `undefined` if the string cannot be parsed as JSON
