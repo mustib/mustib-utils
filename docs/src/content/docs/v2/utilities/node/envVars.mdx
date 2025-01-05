@@ -40,22 +40,18 @@ The `EnvVars` class makes this code much easier to read and maintain, while also
               anyEnv: 'PORT',
             }
         },
-        host: {
-          whenNodeEnvIs: {
-              production: 'PRODUCTION_HOST',
-              anyEnv: 'HOST',
-            }
-        }
       }
     });
     ```
-3. `EnvVars` takes care of everything by selecting the appropriate value for the current environment, converting it to the correct type, marking it as dynamic if necessary, and handling any errors.<br/>
+3. `EnvVars` takes care of everything by selecting the appropriate value for the current environment, converting it to the correct type, marking it as dynamic if specified, and handling any errors.<br/>
 Then you can use the previous `envVars.ts` file in your code as follows:<br/>
     ```ts
     import { envVars } from './envVars';
-    const {port, host} = envVars;
-    console.log(port, host); // process.env.NODE_ENV === 'production' ? {port: 5000} : {port: 3000}
+
+    console.log(envVars.port); // process.env.NODE_ENV === 'production' ? 5000 : 3000
     ```
+
+4. if the currentEnv is `production` the previous example will log the number `5000` else it will log the number `3000`
 </Steps>
 
 
@@ -94,8 +90,7 @@ export const envVars = new EnvVars({
       }},
     secretValues: {
       parseAs(data) {
-        const values = data.varValueForCurrentEnv.split(',');
-        return data.currentEnv !== 'test' ? values : values.reverse();
+        return data.varValueForCurrentEnv.split(',')
       },
       whenNodeEnvIs: {
         anyEnv: 'SECRET_VALUES',
@@ -111,7 +106,7 @@ import { envVars, fromObject } from './envVars';
 console.log(envVars) // { port: 3000, host: 'localhost', secretValues: [ '1', '2', '3', '4' ] }
 
 fromObject.PORT = '5000'
-console.log(envVars) // { port: 5000, host: 'anywhere.com', secretValues: [ '1', '2', '3', '4' ] }
+console.log(envVars) // { port: 5000, host: 'localhost', secretValues: [ '1', '2', '3', '4' ] }
 
 console.log(Object.keys(envVars)) // [ 'port', 'host', 'secretValues' ]
 ```
@@ -169,7 +164,7 @@ An object with variable names as keys and their configuration as object with the
 - `parseAs:` used to convert the value of the env-var from string to the specified type, possible values are:
     1. A `string` with the value of `"string"`, `"number"`, `"bool"`, `"date"` where each value corresponds to a predefined [`parseAsFunction`](#parseasfunction).
     2. A user-defined function whose return value determines the value and type of the environment variable.
-      - see [parseAsFunction](#parseAsFunction) for more details.
+        - see [parseAsFunction](#parseAsFunction) for more details.
 
 - `whenNodeEnvIs:` an object defining the environment variables that should be used for each environment.
     - see [whenNodeEnvIs](#whenNodeEnvIs) for more details.
