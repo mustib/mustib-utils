@@ -18,5 +18,5 @@ export function getUtilityUrl<Category extends keyof Categories>(
   utility: Categories[Category],
   id?: string,
 ) {
-  return `/v1/utilities/${category}/${utility}/${id ? `#${id}` : ''}`;
+  return `/mustib-utils/v1/utilities/${category}/${utility}/${id ? `#${id}` : ''}`;
 }
