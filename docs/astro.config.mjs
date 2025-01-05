@@ -19,7 +19,7 @@ export default defineConfig({
         },
         {
           label: 'Utilities',
-          autogenerate: { directory: 'v1/utilities' },
+          autogenerate: { directory: 'v2/utilities' },
         },
       ],
     }),
