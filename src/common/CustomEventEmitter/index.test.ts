@@ -279,13 +279,14 @@ describe('CustomEventEmitter', () => {
       emitter.debugListeners?.has(debugListener),
       'should add debug listener',
     ).toBe(true);
+
     emitter.addListener('eventName', listener);
+
     expect(
       debugListener,
       'should call debug listener when listener is added',
     ).toBeCalledWith('eventName', 'added listener', {
       once: false,
-      priority: 'normal',
     });
 
     emitter.dispatch('eventName', { value: 'value' });
