@@ -13,4 +13,24 @@ npm install @mustib/utils
 
 <br/>
 
-Please see the **[Getting Started](https://mustib.github.io/mustib-utils/start-guide/getting-started/)** guide for a comprehensive overview of **`@mustib/utils`** usage and for a list of available utilities.
+Please see the **[Getting Started](https://mustib.github.io/mustib-utils/start-guide/getting-started/)** guide for a comprehensive guide on using **`@mustib/utils`** in your projects.
+
+**Don't forget to [star](https://github.com/mustib/mustib-utils)** this repository if you find it useful.
+
+### Available Utilities:
+
+- **[EnvVars](https://mustib.github.io/mustib-utils/v2/utilities/node/envvars/)**
+- **[AppError](https://mustib.github.io/mustib-utils/v2/utilities/common/apperror/)**
+- **[CustomEventEmitter](https://mustib.github.io/mustib-utils/v2/utilities/common/customeventemitter/)**
+- **[millisecondsFromString](https://mustib.github.io/mustib-utils/v2/utilities/common/millisecondsfromstring/)**
+- **[stringFromMilliseconds](https://mustib.github.io/mustib-utils/v2/utilities/common/stringfrommilliseconds/)**
+
+- **[getElementBoundaries](https://mustib.github.io/mustib-utils/v2/utilities/browser/getelementboundaries/)**
+- **[getScrollbarWidth](https://mustib.github.io/mustib-utils/v2/utilities/browser/getscrollbarwidth/)**
+- **[TypedEventEmitter](https://mustib.github.io/mustib-utils/v2/utilities/node/typedeventemitter/)**
+- **[mergeTwoObjects](https://mustib.github.io/mustib-utils/v2/utilities/common/mergetwoobjects/)**
+
+- **[getTypeOf](https://mustib.github.io/mustib-utils/v2/utilities/common/gettypeof/)**
+- **[getDirName](https://mustib.github.io/mustib-utils/v2/utilities/node/getdirname/)**
+- **[parseJson](https://mustib.github.io/mustib-utils/v2/utilities/common/parsejson/)**
+- **[capitalize](https://mustib.github.io/mustib-utils/v2/utilities/common/capitalize/)**
