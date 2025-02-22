@@ -12,10 +12,15 @@ The **`capitalize`** function capitalizes the first letter of a string or each w
 ## Usage
 ```ts
 console.log(capitalize('hello world')); // Hello world
+
 console.log(capitalize('hello world', { onlyFirstWord: true })); // Hello world
+
 console.log(capitalize('hello-world')); // Hello-world
+
 console.log(capitalize('hello-world'), { splitter: '-'}); // Hello-World
+
 console.log(capitalize('hello-world'), { splitter: '-', joiner: ' '}); // Hello World
+
 console.log(capitalize('hello world'), { joiner: '-'}); // Hello-World
 ```
 

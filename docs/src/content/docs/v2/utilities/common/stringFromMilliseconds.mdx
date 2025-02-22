@@ -13,7 +13,30 @@ A function that returns a string representation of a number of milliseconds.
 ## Usage
 ```ts
 console.log(stringFromMilliseconds(1000)); // 1s
+
 console.log(stringFromMilliseconds(1000), { maxUnit: 'ms' }); // 1000ms
+
+console.log(stringFromMilliseconds(1500), { minUnit: 's' }); // 1.5s
+
+console.log(stringFromMilliseconds(2750), { minUnit: 's', }); // 2.7s
+
+console.log(stringFromMilliseconds(2750), { minUnit: 's', maxDecimalCount: 2 }); // 2.75s
+
+console.log(stringFromMilliseconds(2750), { minUnit: 's', decimalBehavior: 'round'}); // 3s
+
+console.log(stringFromMilliseconds(2750), { minUnit: 's', decimalBehavior: 'floor'}); // 2s
+
+console.log(stringFromMilliseconds(2750), { minUnit: 's', decimalBehavior: 'ceil'}); // 3s
+
+console.log(stringFromMilliseconds(1000), {unitsAlias: { s: 'second' }}); // 1second
+
+console.log(stringFromMilliseconds(2000), {unitsAlias: { s: 'second' }}); // 2second
+
+console.log(stringFromMilliseconds(2000), {unitsAlias: { s: {plural: 'seconds', singular: 'second'} }}); // 2seconds
+
+console.log(stringFromMilliseconds(1000), {unitsAlias: { s: {plural: 'seconds', singular: 'second'} }}); // 1second
+
+console.log(stringFromMilliseconds(1500), {separator: '-'}); // 1s-500ms
 ```
 
 ## Definition
@@ -32,6 +55,32 @@ export function stringFromMilliseconds(
           - The largest time unit to be included in the string representation.
           - It's value should be one of the following: `ms`, `s`, `m`, `h`, `d`, `w`, `mo`, `y`.
           - See [Units and their Values](#units-and-their-values).
+
+      - `minUnit:` <Badge text='since v2.1.0'/>
+          - The smallest time unit to be included in the string representation.
+          - It's value should be one of the following: `ms`, `s`, `m`, `h`, `d`, `w`, `mo`, `y`.
+          - See [Units and their Values](#units-and-their-values).
+
+      - `separator:` <Badge text='since v2.1.0'/>
+          - The separator between time units in the string representation.
+          - Default is `:`.
+
+      - `unitsAlias:` <Badge text='since v2.1.0'/>
+          - specifies custom units names to be used in the string representation instead of the [default ones](#units-and-their-values).
+          - It is an object where the key is the time unit and the value is the alias or an object with the singular and plural values.
+          - For example: `{ ms: { singular: 'millisecond', plural: 'milliseconds' } }` or `{ ms: 'millisecond' }`.
+          - <Aside type='note'>If aliases is a string, it's value will be used for both singular and plural values.<br/> If it is an object and one of singular or plural is missing, the default value will be used.</Aside>
+
+      - `maxDecimalCount:` <Badge text='since v2.1.0'/>
+          - The maximum number of decimal places to be included in the string representation.
+          - Default is `1`.
+          - This value is used when the remaining milliseconds of the time unit are less than `minUnit` value and there are remaining milliseconds at the end `when minUnit is greater than 'ms'`.
+
+      - `decimalBehavior:` <Badge text='since v2.1.0'/>
+          - The behavior that will be applied to the decimal part of the time unit.
+          - It is a string that can be one of the following: `round`, `floor`, `ceil`.
+          - Default is `undefined`.
+          - It is used when there will be decimal parts in the string representation and functions the same as their equivalent <a href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math' target='_blank'>Math</a> functions.
 
 - `returns:` [TimeUnits](#timeunits)
 

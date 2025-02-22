@@ -13,7 +13,17 @@ A function that returns a number of milliseconds from a string representation of
 ## Usage
 ```ts
 console.log(millisecondsFromString('1s')); // 1000
+
 console.log(millisecondsFromString('2s:500ms')); // 2500
+
+console.log(millisecondsFromString('2s-500ms', { separator: '-' })); // 2500
+
+console.log(millisecondsFromString('1second', { 
+  unitsAlias: { 
+    'seconds': 's',
+    'second': 's'
+  } 
+})); // 1000
 ```
 
 ## Definition
@@ -32,5 +42,9 @@ export function millisecondsFromString(
       - `separator:`
           - The separator between time units in the string
           - Default is `:`.
+      - `unitsAlias:` <Badge text='since v2.1.0'/>
+          - An object with time unit aliases where keys are aliases and values are time units
+          - See <a target="_blank" href={getUtilityUrl('common', 'stringfrommilliseconds', 'units-and-their-values') }>Units and their Values
+</a> for more details.
 
 - `returns:` number
