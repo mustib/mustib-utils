@@ -7,8 +7,7 @@ on:
     branches: [main]
 
     paths:
-      - 'docs/src/**'
-      - 'astro.config.mjs'
+      - 'docs/**'
 
 permissions:
   contents: read
