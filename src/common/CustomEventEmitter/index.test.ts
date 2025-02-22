@@ -153,7 +153,7 @@ describe('CustomEventEmitter', () => {
     expect(() =>
       // @ts-expect-error lockSymbol should not be used because event does not exist
       emitter.destruct('not-existent-event', lockSymbol),
-    ).to.throw(AppError, /Invalid.*destruct/);
+    ).to.throw(AppError, /Invalid[\s\S]*destruct/);
   });
 
   it('should throw Invalid error if destructing a non destructible event', () => {
@@ -162,7 +162,7 @@ describe('CustomEventEmitter', () => {
     expect(() =>
       // @ts-expect-error lockSymbol should not be used because event is not destructible
       emitter.destruct('eventName', lockSymbol),
-    ).to.throw(AppError, /Invalid.*destruct.*not destructible/);
+    ).to.throw(AppError, /Invalid[\s\S]*destruct[\s\S]*not destructible/);
   });
 
   it('should throw Invalid error if wrong lockSymbol is used for destructing', () => {
@@ -174,7 +174,7 @@ describe('CustomEventEmitter', () => {
 
     expect(() =>
       emitter.destruct('eventName', Symbol('wrong lockSymbol')),
-    ).to.throw(AppError, /Invalid.*destruct.*wrong lockSymbol/);
+    ).to.throw(AppError, /Invalid[\s\S]*destruct[\s\S]*wrong lockSymbol/);
   });
 
   it('should throw Invalid error if lockSymbol is not of type symbol', () => {
@@ -184,7 +184,7 @@ describe('CustomEventEmitter', () => {
           // @ts-expect-error lockSymbol should be of type symbol
           eventName: { lockSymbol: 'wrong lockSymbol' },
         }),
-    ).to.throw(AppError, /Invalid.*lockSymbol/);
+    ).to.throw(AppError, /Invalid[\s\S]*lockSymbol/);
   });
 
   it('should throw Invalid error if event is not dispatchable and there is no lockSymbol', () => {
@@ -194,7 +194,10 @@ describe('CustomEventEmitter', () => {
           // @ts-expect-error lockSymbol should be provided because event is not dispatchable
           eventName: { dispatchable: false },
         }),
-    ).to.throw(AppError, /Invalid.*dispatchable.*must have lockSymbol/);
+    ).to.throw(
+      AppError,
+      /Invalid[\s\S]*dispatchable[\s\S]*must have lockSymbol/,
+    );
   });
 
   it('should throw Invalid error if event is destructible and there is no lockSymbol', () => {
@@ -204,7 +207,10 @@ describe('CustomEventEmitter', () => {
           // @ts-expect-error lockSymbol should be provided because event is destructible
           eventName: { destructible: true },
         }),
-    ).to.throw(AppError, /Invalid.*destructible.*must have lockSymbol/);
+    ).to.throw(
+      AppError,
+      /Invalid[\s\S]*destructible[\s\S]*must have lockSymbol/,
+    );
   });
 
   it('should return whether is has event or not', () => {
@@ -219,7 +225,7 @@ describe('CustomEventEmitter', () => {
     const emitter = new CustomEventEmitter({});
     expect(() => emitter.dispatch('not-existent-event', undefined)).to.throw(
       AppError,
-      /Invalid.*dispatch/,
+      /Invalid[\s\S]*dispatch/,
     );
   });
 
@@ -230,14 +236,14 @@ describe('CustomEventEmitter', () => {
 
     expect(() =>
       emitter.dispatch('eventName', null, { lockSymbol: Symbol('wrong') }),
-    ).to.throw(AppError, /Invalid.*dispatch.*wrong lockSymbol/);
+    ).to.throw(AppError, /Invalid[\s\S]*dispatch[\s\S]*wrong lockSymbol/);
   });
 
   it('should throw Invalid error when removing a listener from an event that does not exist', () => {
     const emitter = new CustomEventEmitter({});
     expect(() =>
       emitter.removeListener('not-existent-event', vi.fn()),
-    ).to.throw(AppError, /Invalid.*remove/);
+    ).to.throw(AppError, /Invalid[\s\S]*remove/);
   });
 
   it('should dispatch an event', () => {

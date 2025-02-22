@@ -8,12 +8,6 @@ describe('AppError', () => {
     expect((appError as any).length).to.be.equal(0);
   });
 
-  it('should not include new line for single error', () => {
-    const appError = new AppError();
-    appError.push('Test', 'test error');
-    expect(appError.message).not.contain('\n');
-  });
-
   it('should include new line for multiple errors', () => {
     const appError = new AppError();
     appError.push('Test', 'test error');

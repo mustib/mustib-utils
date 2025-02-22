@@ -108,13 +108,11 @@ export class AppError<ErrorTypes extends Capitalize<string>> extends Error {
       }, [] as string[]);
 
       const hasManyErrors = formattedErrorType.length > 1;
-      const indentationPrefix = hasManyErrors
-        ? `${' '.repeat(indentation)}`
-        : '';
+      const indentationPrefix = `${' '.repeat(indentation)}`;
 
       if (formattedErrorType.length > 0)
         formattedErrors.push(
-          `${errorType} ${hasManyErrors ? 'Errors:\n' : 'Error: '}${indentationPrefix}${formattedErrorType.join(`\n${indentationPrefix}`)}`,
+          `${errorType} Error${hasManyErrors ? 's' : ''}:\n${indentationPrefix}${formattedErrorType.join(`\n${indentationPrefix}`)}`,
         );
     });
 
