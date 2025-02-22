@@ -45,13 +45,13 @@
   },
   "scripts": {
     "lint": "eslint . --ext .js,.ts",
-    "prebuild": "npm run lint && rimraf ./dist",
+    "prebuild": "npm run test && npm run lint && rimraf ./dist",
     "build": "rollup -c rollup.config.js",
     "prepublishOnly": "npm run build",
     "postbuild": "node ./postBuildScript.js",
     "test": "vitest run",
-    "test-watch": "vitest watch",
-    "docs-dev": "cd ./docs && npm run dev"
+    "test:watch": "vitest watch",
+    "docs:dev": "cd ./docs && npm run dev"
   },
   "files": [
     "./dist",
