@@ -1,9 +1,5 @@
 export type TimeUnitsNames = (typeof timeUnitsOrder)[number];
 
-export type TimeUnit = `${number}${TimeUnitsNames}`;
-
-export type TimeUnits = TimeUnit | `${TimeUnit}:${TimeUnit}`;
-
 const ms = 1;
 const s = ms * 1000;
 const m = s * 60;

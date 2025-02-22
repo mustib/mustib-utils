@@ -1,34 +1,54 @@
 import { AppError } from '../../AppError';
 
-import { timeUnits, type TimeUnits } from '../constants';
-import type { Options } from './Options';
+import { timeUnits, type TimeUnitsNames } from '../constants';
+
+type Options = Partial<{
+  /** Separator to split time units by @default ':' */
+  separator: string;
+
+  /**
+   * Specifies the time unit aliases that are used in the provided string
+   * it is an object where keys are aliases and values are time units
+   */
+  unitsAlias: Record<string, TimeUnitsNames>;
+}>;
+
+function isValidUnit(unitName: string): unitName is TimeUnitsNames {
+  return Object.hasOwn(timeUnits, unitName);
+}
+
+const regex = /^(?<value>\d*\.?\d+)(?<unit>[a-z]+)$/;
 
 export function millisecondsFromString(
-  string: TimeUnits,
+  string: string,
   options?: Options,
 ): number {
-  if (typeof string !== 'string' || (string as string) === '') return 0;
+  if (typeof string !== 'string' || string === '') return 0;
 
-  const { separator = ':' } = options || {};
-  const parts = string.split(separator);
-  const milliseconds = parts.reduce((prev, part) => {
-    const regex = /^(?<value>\d+)(?<unit>[a-z]+)$/.exec(part);
-    if (regex === null || regex.groups === undefined) {
+  const { separator = ':', unitsAlias } = options || {};
+
+  return string.split(separator).reduce((prev, part) => {
+    const regexResult = regex.exec(part);
+
+    if (regexResult === null || regexResult.groups === undefined) {
       return AppError.throw(
         'Unsupported',
         `unsupported time part (${part})`,
       ) as never;
     }
 
-    const unit = regex.groups.unit as keyof typeof timeUnits | undefined;
-    if (unit === undefined || !Object.hasOwn(timeUnits, unit)) {
+    const { unit = '' } = regexResult.groups;
+    const unitName = unitsAlias?.[unit] ?? unit;
+
+    if (!isValidUnit(unitName)) {
       return AppError.throw(
         'Unsupported',
-        `unsupported time unit (${unit}) in (${part})`,
+        `unsupported time unit (${unitName}) in (${part})`,
       ) as never;
     }
 
-    const value = Number(regex.groups.value);
+    const value = Number(regexResult.groups.value);
+
     if (Number.isNaN(value)) {
       return AppError.throw(
         'Unsupported',
@@ -36,8 +56,6 @@ export function millisecondsFromString(
       ) as never;
     }
 
-    return prev + timeUnits[unit] * value;
+    return prev + timeUnits[unitName] * value;
   }, 0);
-
-  return milliseconds;
 }

@@ -2,7 +2,7 @@ import { assert, describe, expect, it } from 'vitest';
 
 import { AppError } from '../../AppError';
 
-import { timeUnits, timeUnitsOrder, type TimeUnits } from '../constants';
+import { timeUnits, timeUnitsOrder } from '../constants';
 
 import { millisecondsFromString } from '.';
 
@@ -20,9 +20,7 @@ describe('millisecondsFromString', () => {
   });
 
   it('should return the sum of the unit values', () => {
-    const timeString = timeUnitsOrder
-      .map((unit) => `1${unit}`)
-      .join(':') as TimeUnits;
+    const timeString = timeUnitsOrder.map((unit) => `1${unit}`).join(':');
     const sum = timeUnitsOrder.reduce(
       (result, unit) => result + timeUnits[unit],
       0,
@@ -57,5 +55,17 @@ describe('millisecondsFromString', () => {
   it('should return 0 when the time unit is not a string or empty string', () => {
     expect(millisecondsFromString('' as any)).toBe(0);
     expect(millisecondsFromString(NaN as any)).toBe(0);
+  });
+
+  it('should use unitsAlias if provided', () => {
+    expect(
+      millisecondsFromString('1second:2seconds', {
+        unitsAlias: { second: 's', seconds: 's' },
+      }),
+    ).toBe(3000);
+  });
+
+  it('should use floating point values', () => {
+    expect(millisecondsFromString('1.5s')).toBe(1500);
   });
 });
