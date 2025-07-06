@@ -2,12 +2,12 @@ import { assert, describe, expect, it } from 'vitest';
 
 import { AppError } from '../../AppError';
 
-import { timeUnits, timeUnitsOrder } from '../constants';
+import { timeUnits, timeUnitsNamesAsc } from '../constants';
 
 import { stringFromMilliseconds } from '.';
 
-const oneDay = timeUnits.d;
-const oneMinute = timeUnits.m;
+const oneDay = timeUnits.d.value;
+const oneMinute = timeUnits.m.value;
 
 describe('stringFromMilliseconds', () => {
   it('should return 0ms when the input unit value is not a number or NaN', () => {
@@ -24,16 +24,16 @@ describe('stringFromMilliseconds', () => {
     );
   });
 
-  timeUnitsOrder.forEach((unit) => {
+  timeUnitsNamesAsc.forEach((unit) => {
     it(`should return 1${unit} when the input unit value is ${timeUnits[unit]}`, () => {
-      expect(stringFromMilliseconds(timeUnits[unit])).toBe(`1${unit}`);
+      expect(stringFromMilliseconds(timeUnits[unit].value)).toBe(`1${unit}`);
     });
   });
 
   it('should return the sum of the unit values', () => {
-    const result = `1${timeUnitsOrder.toReversed().join(':1')}`;
-    const unitsSum = timeUnitsOrder.reduce(
-      (sum, unit) => sum + timeUnits[unit],
+    const result = `1${timeUnitsNamesAsc.toReversed().join(':1')}`;
+    const unitsSum = timeUnitsNamesAsc.reduce(
+      (sum, unit) => sum + timeUnits[unit].value,
       0,
     );
     expect(stringFromMilliseconds(unitsSum)).toBe(result);
@@ -82,16 +82,23 @@ describe('stringFromMilliseconds', () => {
   it('should use decimalBehavior if provided', () => {
     expect(
       stringFromMilliseconds(1400, { decimalBehavior: 'round', minUnit: 's' }),
+      'round should correctly handle values less than 0.5'
     ).toBe('1s');
 
     expect(
       stringFromMilliseconds(1500, { decimalBehavior: 'round', minUnit: 's' }),
+      'round should correctly handle values greater than or equal to 0.5'
+    ).toBe('2s');
+
+    expect(
+      stringFromMilliseconds(1001, { decimalBehavior: 'ceil', minUnit: 's' }),
+      'ceil should correctly handle values less than 0.5'
     ).toBe('2s');
 
     expect(
       stringFromMilliseconds(1500, { decimalBehavior: 'ceil', minUnit: 's' }),
+      'ceil should correctly handle values greater than or equal to 0.5'
     ).toBe('2s');
-
     expect(
       stringFromMilliseconds(1500, { decimalBehavior: 'floor', minUnit: 's' }),
     ).toBe('1s');
@@ -102,8 +109,16 @@ describe('stringFromMilliseconds', () => {
     ).toBe('1.5s');
   });
 
+  it('should round to the next unit if decimalBehavior rounding causes overflows and minUnit is not maxUnit', () => {
+    expect(stringFromMilliseconds(timeUnits.s.value * 59 + 1, { minUnit: 's', decimalBehavior: 'ceil' }), 'ceil should round to the next unit if ceil rounding causes overflows').toBe('1m');
+
+    expect(stringFromMilliseconds(timeUnits.s.value * 59 + 500, { minUnit: 's', decimalBehavior: 'round' }), 'ceil should round to the next unit if round rounding causes overflows').toBe('1m');
+
+  })
+
+
   it('should return 0 minUnit if the input is 0 and minUnit is provided', () => {
-    timeUnitsOrder.forEach((unit) => {
+    timeUnitsNamesAsc.forEach((unit) => {
       expect(stringFromMilliseconds(0, { minUnit: unit })).toBe(`0${unit}`);
     });
   });
@@ -149,7 +164,7 @@ describe('stringFromMilliseconds', () => {
 
     expect(
       stringFromMilliseconds(0, { unitsAlias: { ms: 'millisecond' } }),
-      'should use unitAlias id the input is 0'
+      'should use unitAlias if the input is 0'
     ).toBe('0millisecond');
   });
 

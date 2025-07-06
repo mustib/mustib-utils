@@ -1,6 +1,6 @@
 import { AppError } from '../../AppError';
 
-import { timeUnitsOrder, timeUnits, type TimeUnitsNames } from '../constants';
+import { timeUnitsNamesAsc, timeUnits, maxUnit as _maxUnit, minUnit as _minUnit, type TimeUnitsNames } from '../constants';
 
 type Options = Partial<{
   /**
@@ -17,11 +17,17 @@ type Options = Partial<{
 
   /**
    * Specifies the behavior that will be applied to the decimal part of the time unit.
+   * It is a string that can be one of the following: `round`, `floor`, `ceil`.
+   * 
+   * **NOTE:** When used `maxDecimalCount` option is useless
+   * @default undefined
    */
   decimalBehavior: 'round' | 'floor' | 'ceil';
 
   /**
    * Specifies the maximum number of decimal places to be included in the string representation when the remaining milliseconds of the time unit are less than minUnit value and there are remaining milliseconds at the end.
+   * 
+   * **NOTE:** This option is useless when `decimalBehavior` exists or `minUnit` is greater than `ms`.
    * @default 1
    */
   maxDecimalCount: number;
@@ -54,30 +60,132 @@ export function stringFromMilliseconds(
   const {
     decimalBehavior,
     maxDecimalCount = 1,
-    maxUnit = 'y',
-    minUnit = 'ms',
+    maxUnit = _maxUnit.name,
+    minUnit = _minUnit.name,
     unitsAlias,
     separator = ':',
   } = options ?? {};
 
-  const timeParts: string[] = [];
-  const maxUnitIndex = timeUnitsOrder.indexOf(maxUnit);
+  const { minUnitIndex, maxUnitIndex } = getMinAndMaxUnitIndexes({ minUnit, maxUnit });
+  const partsData = generatePartsData()
+  const unitsRangeDesc = timeUnitsNamesAsc.slice(minUnitIndex, maxUnitIndex + 1).reverse();
+  let remainingMilliseconds = milliseconds < 0 ? -milliseconds : milliseconds;
 
-  if (maxUnitIndex === -1) {
+  for (const unit of unitsRangeDesc) {
+    const unitData = timeUnits[unit]
+    if (remainingMilliseconds < unitData.value) continue;
+    partsData[unit].value = Math.floor(remainingMilliseconds / unitData.value);
+    remainingMilliseconds %= unitData.value
+  }
+
+  if (remainingMilliseconds > 0) {
+    // raw decimal before operating on it
+    const rawDecimal = remainingMilliseconds / timeUnits[minUnit].value;
+
+    switch (decimalBehavior) {
+      case 'floor':
+        partsData[minUnit].value = Math[decimalBehavior](partsData[minUnit].value + rawDecimal);
+        break;
+      case 'round':
+      case 'ceil': {
+        const valueWithRoundedDecimal = Math[decimalBehavior](partsData[minUnit].value + rawDecimal)
+        const unitData = timeUnits[minUnit]
+        const nextUnit = timeUnits[timeUnitsNamesAsc[unitData.index + 1]]
+        const isOverflow = valueWithRoundedDecimal * unitData.value >= nextUnit.value
+        const isLastUnit = minUnitIndex === maxUnitIndex
+
+        if (isOverflow && !isLastUnit) {
+          partsData[nextUnit.name].value++
+          partsData[minUnit].value = 0
+        } else {
+          partsData[minUnit].value = valueWithRoundedDecimal
+        }
+      }
+        break;
+      default:
+        decimalBehavior satisfies undefined; {
+          // 10 for base 10 decimal to detect how many decimal places are needed
+          const decimalBase = 10 ** Math.abs(maxDecimalCount);
+          // decimal with the correct number of decimal places
+          const decimal = Math.floor(rawDecimal * decimalBase) / decimalBase;
+          // add decimal to minUnit
+          partsData[minUnit].value += +decimal;
+        }
+        break;
+    }
+    remainingMilliseconds = 0;
+  }
+
+  const formattedParts = (unitsRangeDesc.reduce((result, unit) => {
+    const partValue = partsData[unit].value
+    if (partValue === 0) return result
+
+    result.push(generatePartString({ partValue, unitAlias: unitsAlias?.[unit], unitName: unit }))
+    return result
+  }, [] as string[]))
+
+  return formattedParts.length > 0 ? formattedParts.join(separator) : generatePartString({ unitName: minUnit, partValue: partsData[minUnit].value, unitAlias: unitsAlias?.[minUnit] })
+}
+
+function generatePartString({ partValue, unitName, unitAlias }: { partValue: number; unitName: TimeUnitsNames, unitAlias: Required<Options>['unitsAlias'][TimeUnitsNames] | undefined }) {
+  let unitNameSingular: string = unitName;
+  let unitNamePlural: string = unitName;
+
+  switch (typeof unitAlias) {
+    case 'string':
+      unitNameSingular = unitAlias;
+      unitNamePlural = unitAlias;
+      break;
+    case 'object':
+      if (typeof unitAlias.plural === 'string')
+        unitNamePlural = unitAlias.plural;
+      if (typeof unitAlias.singular === 'string')
+        unitNameSingular = unitAlias.singular;
+      break;
+    default:
+      unitAlias satisfies undefined;
+      break;
+  }
+
+  return (`${partValue}${partValue > 1 ? unitNamePlural : unitNameSingular}`)
+}
+
+function generatePartsData() {
+  const partsData: {
+    [unit in TimeUnitsNames]: {
+      value: number;
+    }
+  } = {
+    y: { value: 0 },
+    mo: { value: 0 },
+    w: { value: 0 },
+    d: { value: 0 },
+    h: { value: 0 },
+    m: { value: 0 },
+    s: { value: 0 },
+    ms: { value: 0 },
+  };
+
+  return partsData
+}
+
+function getMinAndMaxUnitIndexes({ minUnit, maxUnit }: { minUnit: TimeUnitsNames; maxUnit: TimeUnitsNames }) {
+  if (!(maxUnit in timeUnits)) {
     return AppError.throw(
       'Unsupported',
-      `unsupported maxUnit (${maxUnit}) it must be one of (${timeUnitsOrder.join(', ')})`,
+      `unsupported maxUnit (${maxUnit}) it must be one of (${timeUnitsNamesAsc.join(', ')})`,
     );
   }
 
-  const minUnitIndex = timeUnitsOrder.indexOf(minUnit);
-
-  if (minUnitIndex === -1) {
+  if (!(minUnit in timeUnits)) {
     return AppError.throw(
       'Unsupported',
-      `unsupported minUnit (${minUnit}) it must be one of (${timeUnitsOrder.join(', ')})`,
+      `unsupported minUnit (${minUnit}) it must be one of (${timeUnitsNamesAsc.join(', ')})`,
     );
   }
+
+  const minUnitIndex = timeUnits[minUnit].index;
+  const maxUnitIndex = timeUnits[maxUnit].index;
 
   if (minUnitIndex > maxUnitIndex) {
     return AppError.throw(
@@ -86,85 +194,5 @@ export function stringFromMilliseconds(
     );
   }
 
-  const units = timeUnitsOrder.slice(minUnitIndex, maxUnitIndex + 1);
-  let remainingMilliseconds = milliseconds < 0 ? -milliseconds : milliseconds;
-
-  for (
-    let index = units.length - 1;
-    remainingMilliseconds > 0 && index >= 0;
-    index--
-  ) {
-    const unit = units[index];
-    const unitValue = timeUnits[unit];
-    let unitNameSingular: string = unit;
-    let unitNamePlural: string = unit;
-    const unitAlias = unitsAlias?.[unit];
-
-    switch (typeof unitAlias) {
-      case 'string':
-        unitNameSingular = unitAlias;
-        unitNamePlural = unitAlias;
-        break;
-      case 'object':
-        if (typeof unitAlias.plural === 'string')
-          unitNamePlural = unitAlias.plural;
-        if (typeof unitAlias.singular === 'string')
-          unitNameSingular = unitAlias.singular;
-        break;
-      default:
-        unitAlias satisfies undefined;
-        break;
-    }
-
-    const isTheLastUnit = index === 0;
-
-    if (unitValue > remainingMilliseconds && !isTheLastUnit) continue;
-
-    let value = Math.floor(remainingMilliseconds / unitValue);
-    remainingMilliseconds %= unitValue;
-
-    const hasRemainingTime = remainingMilliseconds > 0;
-
-    if (isTheLastUnit && hasRemainingTime && minUnitIndex > 0) {
-      const rawDecimal = remainingMilliseconds / unitValue;
-
-      // 10 for base 10
-      const decimalBase = 10 ** Math.abs(maxDecimalCount);
-      const decimal = Math.floor(rawDecimal * decimalBase) / decimalBase;
-
-      value += +decimal;
-      remainingMilliseconds = 0;
-
-      switch (decimalBehavior) {
-        case 'ceil':
-        case 'floor':
-        case 'round':
-          value = Math[decimalBehavior](value);
-          break;
-        default:
-          decimalBehavior satisfies undefined;
-          break;
-      }
-    }
-    if (value > 0)
-      timeParts.push(
-        `${value}${value > 1 ? unitNamePlural : unitNameSingular}`,
-      );
-  }
-
-  return timeParts.length > 0 ? timeParts.join(separator) : `0${getDefaultMinUnit({ minUnit, unitsAlias })}`;
-}
-
-/**
- * This function solves a where unitAlias is not applied if the milliseconds is 0
- */
-function getDefaultMinUnit({ minUnit, unitsAlias }: { minUnit: TimeUnitsNames; unitsAlias: Options['unitsAlias'] }): string {
-  let defaultMinUnit: string = minUnit;
-  if (unitsAlias) {
-    const minUnitAlias = unitsAlias[minUnit];
-    if (typeof minUnitAlias === 'string') defaultMinUnit = minUnitAlias;
-    else if (typeof minUnitAlias?.singular === 'string') defaultMinUnit = minUnitAlias.singular;
-  }
-
-  return defaultMinUnit;
+  return { minUnitIndex, maxUnitIndex };
 }

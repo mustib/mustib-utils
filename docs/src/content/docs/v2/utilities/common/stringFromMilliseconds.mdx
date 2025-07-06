@@ -75,12 +75,14 @@ export function stringFromMilliseconds(
           - The maximum number of decimal places to be included in the string representation.
           - Default is `1`.
           - This value is used when the remaining milliseconds of the time unit are less than `minUnit` value and there are remaining milliseconds at the end `when minUnit is greater than 'ms'`.
-
+          - <Code lang='js' code={`/* EXAMPLES */\nstringFromMilliseconds(1500,\n\t{ minUnit: 's', maxDecimalCount: 1 /* default */\n}); // 1.5s\nstringFromMilliseconds(1050, \n\t{ minUnit: 's', maxDecimalCount: 2\n}); // 1.05s\nstringFromMilliseconds(1050, \n\t{ minUnit: 's', maxDecimalCount: 1\n}); // 1s`} />
+          - <Aside type='note'>This option is useless when `decimalBehavior` exists or `minUnit` is greater than `ms`.</Aside>
       - `decimalBehavior:` <Badge text='since v2.1.0'/>
           - The behavior that will be applied to the decimal part of the time unit.
           - It is a string that can be one of the following: `round`, `floor`, `ceil`.
           - Default is `undefined`.
-          - It is used when there will be decimal parts in the string representation and functions the same as their equivalent <a href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math' target='_blank'>Math</a> functions.
+          - It is used when there will be decimal parts in the string representation and functions the same as their equivalent <a href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math' target='_blank'>JavaScript Math</a> functions.
+          <Aside type='note' >When used `maxDecimalCount` option is useless</Aside>
 
 - `returns:` [TimeUnits](#timeunits)
 
@@ -103,7 +105,7 @@ It's return value is a valid input for <a target="_blank" href={getUtilityUrl('c
 ## TimeUnits
 A string contains a number followed by one of the following units: `y`, `mo`, `w`, `d`, `h`, `m`, `s`, `ms` or a combination of them separated by `:`.
 
-### Examples
+### Output Examples
 ```ts
 '1s' '1s:500ms' '1h:30m:45s'
 ```

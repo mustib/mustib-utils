@@ -56,6 +56,6 @@ export function millisecondsFromString(
       ) as never;
     }
 
-    return prev + timeUnits[unitName] * value;
+    return prev + timeUnits[unitName].value * value;
   }, 0);
 }

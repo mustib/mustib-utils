@@ -2,27 +2,27 @@ import { assert, describe, expect, it } from 'vitest';
 
 import { AppError } from '../../AppError';
 
-import { timeUnits, timeUnitsOrder } from '../constants';
+import { timeUnits, timeUnitsNamesAsc } from '../constants';
 
 import { millisecondsFromString } from '.';
 
 describe('millisecondsFromString', () => {
   it('should return 0 when the input unit value is 0', () => {
-    timeUnitsOrder.forEach((unit) =>
+    timeUnitsNamesAsc.forEach((unit) =>
       expect(millisecondsFromString(`0${unit}`)).toBe(0),
     );
   });
 
   it('should return the unit value when the input unit value is 1', () => {
-    timeUnitsOrder.forEach((unit) =>
-      expect(millisecondsFromString(`1${unit}`)).toBe(timeUnits[unit]),
+    timeUnitsNamesAsc.forEach((unit) =>
+      expect(millisecondsFromString(`1${unit}`)).toBe(timeUnits[unit].value),
     );
   });
 
   it('should return the sum of the unit values', () => {
-    const timeString = timeUnitsOrder.map((unit) => `1${unit}`).join(':');
-    const sum = timeUnitsOrder.reduce(
-      (result, unit) => result + timeUnits[unit],
+    const timeString = timeUnitsNamesAsc.map((unit) => `1${unit}`).join(':');
+    const sum = timeUnitsNamesAsc.reduce(
+      (result, unit) => result + timeUnits[unit].value,
       0,
     );
     expect(millisecondsFromString(timeString)).toBe(sum);
