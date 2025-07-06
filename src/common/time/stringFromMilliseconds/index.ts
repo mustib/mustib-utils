@@ -152,5 +152,19 @@ export function stringFromMilliseconds(
       );
   }
 
-  return timeParts.length > 0 ? timeParts.join(separator) : `0${minUnit}`;
+  return timeParts.length > 0 ? timeParts.join(separator) : `0${getDefaultMinUnit({ minUnit, unitsAlias })}`;
+}
+
+/**
+ * This function solves a where unitAlias is not applied if the milliseconds is 0
+ */
+function getDefaultMinUnit({ minUnit, unitsAlias }: { minUnit: TimeUnitsNames; unitsAlias: Options['unitsAlias'] }): string {
+  let defaultMinUnit: string = minUnit;
+  if (unitsAlias) {
+    const minUnitAlias = unitsAlias[minUnit];
+    if (typeof minUnitAlias === 'string') defaultMinUnit = minUnitAlias;
+    else if (typeof minUnitAlias?.singular === 'string') defaultMinUnit = minUnitAlias.singular;
+  }
+
+  return defaultMinUnit;
 }

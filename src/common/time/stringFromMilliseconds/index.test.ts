@@ -146,6 +146,11 @@ describe('stringFromMilliseconds', () => {
       }),
       'should default to unit name if object plural value is not provided',
     ).toBe('2s');
+
+    expect(
+      stringFromMilliseconds(0, { unitsAlias: { ms: 'millisecond' } }),
+      'should use unitAlias id the input is 0'
+    ).toBe('0millisecond');
   });
 
   it('should use separator if provided', () => {
