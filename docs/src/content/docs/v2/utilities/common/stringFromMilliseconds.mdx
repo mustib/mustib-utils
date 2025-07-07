@@ -28,15 +28,21 @@ console.log(stringFromMilliseconds(2750), { minUnit: 's', decimalBehavior: 'floo
 
 console.log(stringFromMilliseconds(2750), { minUnit: 's', decimalBehavior: 'ceil'}); // 3s
 
-console.log(stringFromMilliseconds(1000), {unitsAlias: { s: 'second' }}); // 1second
+console.log(stringFromMilliseconds(1000), { unitsAlias: { s: 'second' }} ); // 1second
 
-console.log(stringFromMilliseconds(2000), {unitsAlias: { s: 'second' }}); // 2second
+console.log(stringFromMilliseconds(2000), { unitsAlias: { s: 'second' }}); // 2second
 
-console.log(stringFromMilliseconds(2000), {unitsAlias: { s: {plural: 'seconds', singular: 'second'} }}); // 2seconds
+console.log(stringFromMilliseconds(2000), { unitsAlias: { s: {plural: 'seconds', singular: 'second'} }} ); // 2seconds
 
-console.log(stringFromMilliseconds(1000), {unitsAlias: { s: {plural: 'seconds', singular: 'second'} }}); // 1second
+console.log(stringFromMilliseconds(1000), { unitsAlias: { s: {plural: 'seconds', singular: 'second'} }} ); // 1second
 
-console.log(stringFromMilliseconds(1500), {separator: '-'}); // 1s-500ms
+console.log(stringFromMilliseconds(1500), { separator: '-' }); // 1s-500ms
+
+console.log(stringFromMilliseconds(0), { showZeroValuedUnits: true }); // 00y:00mo:0w:00d:00h:00m:00s:000ms
+
+console.log(stringFromMilliseconds(2005), { fixedWidth: true }); // 02s:005ms
+
+console.log(stringFromMilliseconds(2005), { fixedWidth: true, showZeroValuedUnits: true }); // 00y:00mo:0w:00d:00h:00m:02s:005ms
 ```
 
 ## Definition
@@ -60,6 +66,16 @@ export function stringFromMilliseconds(
           - The smallest time unit to be included in the string representation.
           - It's value should be one of the following: `ms`, `s`, `m`, `h`, `d`, `w`, `mo`, `y`.
           - See [Units and their Values](#units-and-their-values).
+
+      - `showZeroValuedUnits:` <Badge text='since v2.2.0'/>
+          - A boolean value that indicates whether to display all time units from minUnit to maxUnit, even if they have zero values.
+          - For example, the output might be `1y:0mo:0w:0d:0h:2m:0s:5ms`.
+          - Default is `false`.
+
+      - `fixedWidth:` <Badge text='since v2.2.0'/>
+          - A boolean value that indicates whether to pad the time units' string representation with leading zeros to maintain a fixed width.
+          - For example, the output might be `01mo:02d:23m:03s:005ms` instead of `1mo:2d:23m:3s:5ms`.
+          - Default is `false`.
 
       - `separator:` <Badge text='since v2.1.0'/>
           - The separator between time units in the string representation.
@@ -104,8 +120,5 @@ It's return value is a valid input for <a target="_blank" href={getUtilityUrl('c
 
 ## TimeUnits
 A string contains a number followed by one of the following units: `y`, `mo`, `w`, `d`, `h`, `m`, `s`, `ms` or a combination of them separated by `:`.
-
-### Output Examples
-```ts
-'1s' '1s:500ms' '1h:30m:45s'
-```
+    - <h5>For example:</h5>
+        <Code lang='js' code="'1s' '1s:500ms' '1h:30m:45s'" />
