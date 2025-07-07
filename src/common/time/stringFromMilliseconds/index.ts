@@ -16,6 +16,20 @@ type Options = Partial<{
   minUnit: TimeUnitsNames;
 
   /**
+   * Indicates whether to display all time units from minUnit to maxUnit, even if they have zero values.
+   * For example, the output might be 1y:0mo:0w:0d:0h:2m:0s:5ms.
+   * @default false
+   */
+  showZeroValuedUnits: boolean;
+
+  /**
+   * Specifies whether to pad the time units' string representation with leading zeros to maintain a fixed width.
+   * For example, the output might be 01mo:02d:23m:03s:005ms instead of 1mo:2d:23m:3s:5ms.
+   * @default false
+   */
+  fixedWidth: boolean;
+
+  /**
    * Specifies the behavior that will be applied to the decimal part of the time unit.
    * It is a string that can be one of the following: `round`, `floor`, `ceil`.
    * 
@@ -62,6 +76,8 @@ export function stringFromMilliseconds(
     maxDecimalCount = 1,
     maxUnit = _maxUnit.name,
     minUnit = _minUnit.name,
+    showZeroValuedUnits = false,
+    fixedWidth = false,
     unitsAlias,
     separator = ':',
   } = options ?? {};
@@ -118,16 +134,21 @@ export function stringFromMilliseconds(
 
   const formattedParts = (unitsRangeDesc.reduce((result, unit) => {
     const partValue = partsData[unit].value
-    if (partValue === 0) return result
+    if (partValue === 0 && !showZeroValuedUnits) return result
 
-    result.push(generatePartString({ partValue, unitAlias: unitsAlias?.[unit], unitName: unit }))
+    result.push(generatePartString({ partValue, unitAlias: unitsAlias?.[unit], unitName: unit, fixedWidth }))
     return result
   }, [] as string[]))
 
-  return formattedParts.length > 0 ? formattedParts.join(separator) : generatePartString({ unitName: minUnit, partValue: partsData[minUnit].value, unitAlias: unitsAlias?.[minUnit] })
+  return formattedParts.length > 0 ? formattedParts.join(separator) : generatePartString({ unitName: minUnit, partValue: partsData[minUnit].value, unitAlias: unitsAlias?.[minUnit], fixedWidth })
 }
 
-function generatePartString({ partValue, unitName, unitAlias }: { partValue: number; unitName: TimeUnitsNames, unitAlias: Required<Options>['unitsAlias'][TimeUnitsNames] | undefined }) {
+function generatePartString({ partValue, unitName, unitAlias, fixedWidth }: {
+  partValue: number,
+  unitName: TimeUnitsNames,
+  fixedWidth: boolean
+  unitAlias: Required<Options>['unitsAlias'][TimeUnitsNames] | undefined
+}) {
   let unitNameSingular: string = unitName;
   let unitNamePlural: string = unitName;
 
@@ -147,7 +168,9 @@ function generatePartString({ partValue, unitName, unitAlias }: { partValue: num
       break;
   }
 
-  return (`${partValue}${partValue > 1 ? unitNamePlural : unitNameSingular}`)
+  const partValueString = fixedWidth ? partValue.toString().padStart(timeUnits[unitName].size, '0') : partValue.toString()
+
+  return (`${partValueString}${partValue > 1 ? unitNamePlural : unitNameSingular}`)
 }
 
 function generatePartsData() {

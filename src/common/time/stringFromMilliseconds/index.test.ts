@@ -175,4 +175,49 @@ describe('stringFromMilliseconds', () => {
       }),
     ).toBe('2s & 500ms');
   });
+
+  it('should showZeroValuedUnits if provided', () => {
+    expect(
+      stringFromMilliseconds(0, {
+        showZeroValuedUnits: true,
+      }),
+    ).toBe('0y:0mo:0w:0d:0h:0m:0s:0ms');
+
+    expect(
+      stringFromMilliseconds(0, {
+        showZeroValuedUnits: true,
+        minUnit: 's',
+        maxUnit: 'h'
+      }),
+      'should respect minUnit and maxUnit in showZeroValuedUnits'
+    ).toBe('0h:0m:0s');
+  })
+
+  it('should use fixedWidth if provided', () => {
+    expect(
+      stringFromMilliseconds(2005, {
+        fixedWidth: true,
+      }),
+    ).toBe('02s:005ms');
+  });
+
+  it('should use fixedWidth and showZeroValuedUnits together if provided', () => {
+    expect(
+      stringFromMilliseconds(0, {
+        fixedWidth: true,
+        showZeroValuedUnits: true,
+      }),
+    ).toBe('00y:00mo:0w:00d:00h:00m:00s:000ms');
+
+    expect(
+      stringFromMilliseconds(0, {
+        fixedWidth: true,
+        showZeroValuedUnits: true,
+        minUnit: 's',
+        maxUnit: 'h'
+      }),
+      'should respect minUnit and maxUnit in showZeroValuedUnits and fixedWidth'
+    ).toBe('00h:00m:00s');
+
+  });
 });
