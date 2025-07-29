@@ -38,8 +38,16 @@ export type EventDispatchParams<
  */
 type EventRunningBehavior = 'sync' | 'async' | 'async-sequential';
 
+type AfterAllCallback<Event extends DefaultEventData> = (data: {
+  dispatchValue: Event['dispatchValue'];
+  listenerValue: Event['listenerValue'];
+  listenerCount: number;
+}) => void;
+
 type ConstructorEventData<Event extends DefaultEventData> = {
   runningBehavior?: EventRunningBehavior;
+
+  afterAll?: AfterAllCallback<Event>;
 } & {
   [key in 'listener' | 'prepend']?:
   | ((value: Event['listenerValue']) => void)
@@ -112,6 +120,7 @@ export class CustomEventEmitter<
       dispatchable: boolean;
       destructed: boolean;
       runningBehavior: EventRunningBehavior;
+      afterAllCallback: AfterAllCallback<any> | undefined;
 
       prepare?<Event extends DefaultEventData>(
         value: Event['dispatchValue'],
@@ -141,6 +150,7 @@ export class CustomEventEmitter<
         dispatchable = true,
         listener,
         lockSymbol,
+        afterAll,
         prepare,
         prepend,
         runningBehavior = 'sync',
@@ -177,6 +187,7 @@ export class CustomEventEmitter<
           destructible,
           dispatchable,
           lockSymbol,
+          afterAllCallback: afterAll,
           runningBehavior,
         };
         if (listener)
@@ -343,24 +354,24 @@ export class CustomEventEmitter<
         ', wrong lockSymbol provided',
       );
 
-    const dispatchedValue = event.prepare ? event.prepare(value) : value;
+    const listenerValue = event.prepare ? event.prepare(value) : value;
 
     if (this.debugListeners)
       this.debugListeners.forEach((debugListener) =>
-        debugListener(name.toString(), 'dispatched', dispatchedValue),
+        debugListener(name.toString(), 'dispatched', listenerValue),
       );
 
     const listenersData = this.getListenersGenerator(name);
 
     const callListener = (listenerData: ListenerData) => {
-      listenerData.listener(dispatchedValue);
+      listenerData.listener(listenerValue);
       if (listenerData.isOnce) {
         this.removeListener(name, listenerData.listener);
       }
     };
 
     const callListenerAsync = async (listenerData: ListenerData) => {
-      await listenerData.listener(dispatchedValue);
+      await listenerData.listener(listenerValue);
       if (listenerData.isOnce) {
         this.removeListener(name, listenerData.listener);
       }
@@ -368,32 +379,52 @@ export class CustomEventEmitter<
 
     switch (event.runningBehavior) {
       case 'sync': {
+        let i = 0;
         for (const listenerData of listenersData) {
           callListener(listenerData);
+          i++;
         }
+        event.afterAllCallback?.({
+          dispatchValue: value,
+          listenerCount: i,
+          listenerValue,
+        });
         break;
       }
 
       case 'async': {
         queueMicrotask(() => {
+          let i = 0
           for (const listenerData of listenersData) {
             callListener(listenerData);
+            i++;
           }
+          event.afterAllCallback?.({
+            dispatchValue: value,
+            listenerCount: i,
+            listenerValue,
+          });
         });
         break;
       }
 
       case 'async-sequential': {
         queueMicrotask(async () => {
+          let i = 0;
           for (const listenerData of listenersData) {
             await callListenerAsync(listenerData);
+            i++;
           }
+          event.afterAllCallback?.({
+            dispatchValue: value,
+            listenerCount: i,
+            listenerValue,
+          });
         });
         break;
       }
 
       default: {
-        // Exhaustiveness check
         event.runningBehavior satisfies never;
         break;
       }
