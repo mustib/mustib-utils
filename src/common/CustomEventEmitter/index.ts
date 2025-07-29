@@ -44,10 +44,17 @@ type AfterAllCallback<Event extends DefaultEventData> = (data: {
   listenerCount: number;
 }) => void;
 
+type BeforeAllCallback<Event extends DefaultEventData> = (data: {
+  dispatchValue: Event['dispatchValue'];
+  listenerValue: Event['listenerValue'];
+  listenerCount: number;
+}) => void;
+
 type ConstructorEventData<Event extends DefaultEventData> = {
   runningBehavior?: EventRunningBehavior;
 
   afterAll?: AfterAllCallback<Event>;
+  beforeAll?: BeforeAllCallback<Event>;
 } & {
   [key in 'listener' | 'prepend']?:
   | ((value: Event['listenerValue']) => void)
@@ -121,6 +128,7 @@ export class CustomEventEmitter<
       destructed: boolean;
       runningBehavior: EventRunningBehavior;
       afterAllCallback: AfterAllCallback<any> | undefined;
+      beforeAllCallback: BeforeAllCallback<any> | undefined
 
       prepare?<Event extends DefaultEventData>(
         value: Event['dispatchValue'],
@@ -151,6 +159,7 @@ export class CustomEventEmitter<
         listener,
         lockSymbol,
         afterAll,
+        beforeAll,
         prepare,
         prepend,
         runningBehavior = 'sync',
@@ -188,6 +197,7 @@ export class CustomEventEmitter<
           dispatchable,
           lockSymbol,
           afterAllCallback: afterAll,
+          beforeAllCallback: beforeAll,
           runningBehavior,
         };
         if (listener)
@@ -376,6 +386,12 @@ export class CustomEventEmitter<
         this.removeListener(name, listenerData.listener);
       }
     };
+
+    event.beforeAllCallback?.({
+      dispatchValue: value,
+      listenerValue,
+      listenerCount: event.listeners.all.size
+    })
 
     switch (event.runningBehavior) {
       case 'sync': {
