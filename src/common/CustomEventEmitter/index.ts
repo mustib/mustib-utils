@@ -29,13 +29,24 @@ export type EventDispatchParams<
   ? [Name, Event['dispatchValue'], { lockSymbol: symbol }]
   : [Name, Event['dispatchValue']];
 
+/**
+ * Determines how the event listeners are executed.
+ * 'sync' - listeners are executed synchronously.
+ * 'async' - listeners are executed asynchronously, but not sequentially.
+ * 'async-sequential' - listeners are executed asynchronously and sequentially where the next listener will not be executed until the previous one has finished.
+ * @default 'sync'
+ */
+type EventRunningBehavior = 'sync' | 'async' | 'async-sequential';
+
 type ConstructorEventData<Event extends DefaultEventData> = {
+  runningBehavior?: EventRunningBehavior;
+} & {
   [key in 'listener' | 'prepend']?:
-    | ((value: Event['listenerValue']) => void)
-    | {
-        listener: (value: Event['listenerValue']) => void;
-        options: AddListenerOptions;
-      };
+  | ((value: Event['listenerValue']) => void)
+  | {
+    listener: (value: Event['listenerValue']) => void;
+    options: AddListenerOptions;
+  };
 } & (Event['dispatchable'] extends false
   ? { dispatchable: false }
   : { dispatchable?: true }) &
@@ -44,39 +55,50 @@ type ConstructorEventData<Event extends DefaultEventData> = {
     : { destructible?: false }) &
   (Event['dispatchValue'] extends Event['listenerValue']
     ? {
-        prepare?: (
-          value: Required<Event>['dispatchValue'],
-        ) => Required<Event>['listenerValue'];
-      }
+      prepare?: (
+        value: Required<Event>['dispatchValue'],
+      ) => Required<Event>['listenerValue'];
+    }
     : {
-        prepare?: (
-          value: Required<Event>['dispatchValue'],
-        ) => Required<Event>['listenerValue'];
-      }) &
+      prepare?: (
+        value: Required<Event>['dispatchValue'],
+      ) => Required<Event>['listenerValue'];
+    }) &
   (Event['destructible'] extends true
     ? { lockSymbol: symbol }
     : Event['dispatchable'] extends false
-      ? { lockSymbol: symbol }
-      : { lockSymbol?: undefined });
+    ? { lockSymbol: symbol }
+    : { lockSymbol?: undefined });
 
 export type EventDebugListener = <
   Type extends
-    | 'destructed'
-    | 'added listener'
-    | 'prepended listener'
-    | 'removed listener'
-    | 'dispatched',
+  | 'destructed'
+  | 'added listener'
+  | 'prepended listener'
+  | 'removed listener'
+  | 'dispatched',
 >(
   eventName: string,
   operationType: Type,
   details: Type extends 'added listener' | 'prepended listener'
     ? Required<AddListenerOptions>
     : Type extends 'removed listener'
-      ? { priority: (typeof EVENT_TYPES_PRIORITIES)[number] }
-      : Type extends 'dispatched'
-        ? unknown
-        : undefined,
+    ? { priority: (typeof EVENT_TYPES_PRIORITIES)[number] }
+    : Type extends 'dispatched'
+    ? unknown
+    : undefined,
 ) => void;
+
+
+type ListenerHandler<Value = any> = (
+  value: Value,
+) => void | Promise<void>;
+
+type ListenerData = {
+  isOnce: boolean;
+  listener: ListenerHandler;
+  priority: (typeof EVENT_TYPES_PRIORITIES)[number];
+}
 
 export class CustomEventEmitter<
   EventMaps extends Record<string, DefaultEventData>,
@@ -89,6 +111,7 @@ export class CustomEventEmitter<
       destructible: boolean;
       dispatchable: boolean;
       destructed: boolean;
+      runningBehavior: EventRunningBehavior;
 
       prepare?<Event extends DefaultEventData>(
         value: Event['dispatchValue'],
@@ -96,16 +119,12 @@ export class CustomEventEmitter<
 
       listeners: {
         [type in (typeof EVENT_TYPES_PRIORITIES)[number]]: Set<
-          (value: any) => void
+          ListenerHandler
         >;
       } & {
         all: Map<
-          (value: any) => void,
-          {
-            isOnce: boolean;
-            listener(value: any): void;
-            priority: (typeof EVENT_TYPES_PRIORITIES)[number];
-          }
+          ListenerHandler,
+          ListenerData
         >;
       };
     };
@@ -124,6 +143,7 @@ export class CustomEventEmitter<
         lockSymbol,
         prepare,
         prepend,
+        runningBehavior = 'sync',
       } = events[name];
 
       let hasError = false;
@@ -157,6 +177,7 @@ export class CustomEventEmitter<
           destructible,
           dispatchable,
           lockSymbol,
+          runningBehavior,
         };
         if (listener)
           if (typeof listener === 'function') this.addListener(name, listener);
@@ -227,7 +248,7 @@ export class CustomEventEmitter<
     priority,
   }: {
     name: keyof EventMaps;
-    listener: (value: any) => void;
+    listener: ListenerHandler;
     listenerOptions?: AddListenerOptions;
     priority: (typeof EVENT_TYPES_PRIORITIES)[number];
   }) {
@@ -241,14 +262,14 @@ export class CustomEventEmitter<
 
     if (event.destructed) return;
 
-    const listenerObject = {
+    const listenerData: ListenerData = {
       isOnce: !!listenerOptions?.once,
       listener,
       priority,
     };
 
     event.listeners[priority].add(listener);
-    event.listeners.all.set(listener, listenerObject);
+    event.listeners.all.set(listener, listenerData);
 
     if (this.debugListeners) {
       this.debugListeners.forEach((debugListener) =>
@@ -256,7 +277,7 @@ export class CustomEventEmitter<
           name.toString(),
           `${priority === 'prepend' ? 'prepended' : 'added'} listener`,
           {
-            once: listenerObject.isOnce,
+            once: listenerData.isOnce,
           },
         ),
       );
@@ -265,7 +286,7 @@ export class CustomEventEmitter<
 
   prependListener<Name extends keyof EventMaps>(
     name: Name,
-    listener: (value: EventMaps[Name]['listenerValue']) => void,
+    listener: ListenerHandler<EventMaps[Name]['listenerValue']>,
     listenerOptions?: AddListenerOptions,
   ) {
     this.insertListenerPriority({
@@ -279,7 +300,7 @@ export class CustomEventEmitter<
 
   addListener<Name extends keyof EventMaps>(
     name: Name,
-    listener: (value: EventMaps[Name]['listenerValue']) => void,
+    listener: ListenerHandler<EventMaps[Name]['listenerValue']>,
     listenerOptions?: AddListenerOptions,
   ) {
     this.insertListenerPriority({
@@ -290,6 +311,17 @@ export class CustomEventEmitter<
     });
 
     return this;
+  }
+
+  private *getListenersGenerator(name: string | number | symbol) {
+    const event = this.events[name];
+    for (const priority of EVENT_TYPES_PRIORITIES) {
+      for (const listener of event.listeners[priority]) {
+        const listenerData = event.listeners.all.get(listener);
+        if (!listenerData) continue;
+        yield listenerData;
+      }
+    }
   }
 
   dispatch<Name extends keyof EventMaps>(
@@ -318,13 +350,54 @@ export class CustomEventEmitter<
         debugListener(name.toString(), 'dispatched', dispatchedValue),
       );
 
-    EVENT_TYPES_PRIORITIES.forEach((priority) => {
-      event.listeners[priority]?.forEach((listener) => {
-        listener(dispatchedValue);
-        const listenerData = event.listeners.all.get(listener);
-        if (listenerData?.isOnce) this.removeListener(name, listener);
-      });
-    });
+    const listenersData = this.getListenersGenerator(name);
+
+    const callListener = (listenerData: ListenerData) => {
+      listenerData.listener(dispatchedValue);
+      if (listenerData.isOnce) {
+        this.removeListener(name, listenerData.listener);
+      }
+    };
+
+    const callListenerAsync = async (listenerData: ListenerData) => {
+      await listenerData.listener(dispatchedValue);
+      if (listenerData.isOnce) {
+        this.removeListener(name, listenerData.listener);
+      }
+    };
+
+    switch (event.runningBehavior) {
+      case 'sync': {
+        for (const listenerData of listenersData) {
+          callListener(listenerData);
+        }
+        break;
+      }
+
+      case 'async': {
+        queueMicrotask(() => {
+          for (const listenerData of listenersData) {
+            callListener(listenerData);
+          }
+        });
+        break;
+      }
+
+      case 'async-sequential': {
+        queueMicrotask(async () => {
+          for (const listenerData of listenersData) {
+            await callListenerAsync(listenerData);
+          }
+        });
+        break;
+      }
+
+      default: {
+        // Exhaustiveness check
+        event.runningBehavior satisfies never;
+        break;
+      }
+    }
 
     return this;
   }
