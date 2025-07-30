@@ -15,7 +15,9 @@ npm install @mustib/utils
 
 Please see the **[Getting Started](https://mustib.github.io/mustib-utils/start-guide/getting-started/)** guide for a comprehensive guide on using **`@mustib/utils`** in your projects.
 
-**Don't forget to [star](https://github.com/mustib/mustib-utils)** this repository if you find it useful.
+**Don't forget to star [this repository](https://github.com/mustib/mustib-utils)** if you find it useful.
+
+For updates and new features, please refer to the **[CHANGELOG.md](https://github.com/mustib/mustib-utils/blob/main/CHANGELOG.md)** file in the GitHub repository to track all changes.
 
 ### Available Utilities:
 
@@ -31,6 +33,7 @@ Please see the **[Getting Started](https://mustib.github.io/mustib-utils/start-g
 - **[mergeTwoObjects](https://mustib.github.io/mustib-utils/v2/utilities/common/mergetwoobjects/)**
 
 - **[getTypeOf](https://mustib.github.io/mustib-utils/v2/utilities/common/gettypeof/)**
+- **[wait](https://mustib.github.io/mustib-utils/v2/utilities/common/wait/)**
 - **[getDirName](https://mustib.github.io/mustib-utils/v2/utilities/node/getdirname/)**
 - **[parseJson](https://mustib.github.io/mustib-utils/v2/utilities/common/parsejson/)**
 - **[capitalize](https://mustib.github.io/mustib-utils/v2/utilities/common/capitalize/)**
