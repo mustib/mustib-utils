@@ -293,28 +293,51 @@ type ConstructorEventData = {
     | { 
         options: ListenerOptions;
         listener: (value: Event['listenerValue']) => void
-      };
+      }
+} & {
   prepare?: (value: Event['dispatchValue']) => Event['dispatchValue'];
   dispatchable?: boolean;
   destructible?: boolean;
   lockSymbol?: symbol;
+  runningBehavior?: 'sync' | 'async' | 'async-sequential'
+} & {
+  [key in 'beforeAll' | 'afterAll']: <Event extends DefaultEventData>(data: {
+    dispatchValue: Event['dispatchValue'];
+    listenerValue: Event['listenerValue'];
+    listenerCount: number;
+  }) => void | Promise<void>
 }
 ```
-- ### Listener or Prepend
+- ### listener and prepend
     - a function that will be added as a listener or an object that contains a listener function and it's options.
     - it can be used to add or prepend a listener at initialization time.
     - see [add or prepend listener](#add-or-prepend-listener) for more details
 
-- ### Prepare
+- ### prepare
     - a function that transforms the dispatched value before it is passed to the listener.
     - it is required if the type of the [dispatched value](#dispatchvalue) is different from the type of the [value](#listenervalue) expected by the listener.
 
-- ### Dispatchable
+- ### dispatchable
     - a boolean indicating whether the event can be dispatched.
 
-- ### Destructible
+- ### destructible
     - a boolean indicating whether the event can be destructed.
 
-- ### LockSymbol
+- ### lockSymbol
     - a symbol that will be used to unlock the event.
     - it is required if the event is destructible or non dispatchable.
+
+- ### runningBehavior
+    - <Badge text='since: v2.3.0' />
+    - a string with the value `sync`, `async`, or `async-sequential`.
+    - `sync`: the default behavior, all events are executed synchronously.
+    - `async`: all events are executed asynchronously but will not wait for async listeners to resolve.
+    - `async-sequential`: all events are executed asynchronously and will wait for for current listener to resolve before executing the next listener.
+
+- ### beforeAll and afterAll
+    - <Badge text='since: v2.3.0' />
+    - functions that will be called before and after all listeners are executed.
+    - they receive an object with the following properties:
+        - `dispatchValue`: the value passed to the `dispatch` method see [DispatchValue](#dispatchvalue) for more details.
+        - `listenerValue`: the value passed to the listener see [ListenerValue](#listenervalue) for more details.
+        - `listenerCount`: the number of listeners that (will be or have been) executed.
