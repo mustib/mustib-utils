@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { wait } from "../time";
 import { CustomEventEmitter } from ".";
 
 describe('CustomEventEmitter.beforeAll', () => {
@@ -19,7 +20,7 @@ describe('CustomEventEmitter.beforeAll', () => {
     expect(prepare).toHaveBeenCalledWith('test-value');
   })
 
-  it('should call beforeAll callback even if no listeners are present (async)', () => {
+  it('should call beforeAll callback even if no listeners are present (async)', async () => {
     const beforeAll = vi.fn();
     const prepare = vi.fn(() => 'prepare-value');
     const emitter = new CustomEventEmitter({
@@ -30,13 +31,14 @@ describe('CustomEventEmitter.beforeAll', () => {
       },
     });
     emitter.dispatch('eventName', 'test-value');
+    await wait()
     expect(beforeAll).toHaveBeenCalledTimes(1);
     expect(beforeAll).toHaveBeenCalledWith({ dispatchValue: 'test-value', listenerValue: 'prepare-value', listenerCount: 0 });
     expect(prepare).toHaveBeenCalledBefore(beforeAll)
     expect(prepare).toHaveBeenCalledWith('test-value');
   })
 
-  it('should call beforeAll callback even if no listeners are present (async-sequential)', () => {
+  it('should call beforeAll callback even if no listeners are present (async-sequential)', async () => {
     const beforeAll = vi.fn();
     const prepare = vi.fn(() => 'prepare-value');
     const emitter = new CustomEventEmitter({
@@ -47,6 +49,7 @@ describe('CustomEventEmitter.beforeAll', () => {
       },
     });
     emitter.dispatch('eventName', 'test-value');
+    await wait()
     expect(beforeAll).toHaveBeenCalledTimes(1);
     expect(beforeAll).toHaveBeenCalledWith({ dispatchValue: 'test-value', listenerValue: 'prepare-value', listenerCount: 0 });
     expect(prepare).toHaveBeenCalledBefore(beforeAll)

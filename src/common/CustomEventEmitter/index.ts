@@ -42,13 +42,13 @@ type AfterAllCallback<Event extends DefaultEventData> = (data: {
   dispatchValue: Event['dispatchValue'];
   listenerValue: Event['listenerValue'];
   listenerCount: number;
-}) => void;
+}) => void | Promise<void>;
 
 type BeforeAllCallback<Event extends DefaultEventData> = (data: {
   dispatchValue: Event['dispatchValue'];
   listenerValue: Event['listenerValue'];
   listenerCount: number;
-}) => void;
+}) => void | Promise<void>;
 
 type ConstructorEventData<Event extends DefaultEventData> = {
   runningBehavior?: EventRunningBehavior;
@@ -387,15 +387,14 @@ export class CustomEventEmitter<
       }
     };
 
-    event.beforeAllCallback?.({
-      dispatchValue: value,
-      listenerValue,
-      listenerCount: event.listeners.all.size
-    })
-
     switch (event.runningBehavior) {
       case 'sync': {
         let i = 0;
+        event.beforeAllCallback?.({
+          dispatchValue: value,
+          listenerValue,
+          listenerCount: event.listeners.all.size
+        })
         for (const listenerData of listenersData) {
           callListener(listenerData);
           i++;
@@ -411,6 +410,11 @@ export class CustomEventEmitter<
       case 'async': {
         queueMicrotask(() => {
           let i = 0
+          event.beforeAllCallback?.({
+            dispatchValue: value,
+            listenerValue,
+            listenerCount: event.listeners.all.size
+          })
           for (const listenerData of listenersData) {
             callListener(listenerData);
             i++;
@@ -427,6 +431,11 @@ export class CustomEventEmitter<
       case 'async-sequential': {
         queueMicrotask(async () => {
           let i = 0;
+          await event.beforeAllCallback?.({
+            dispatchValue: value,
+            listenerValue,
+            listenerCount: event.listeners.all.size
+          })
           for (const listenerData of listenersData) {
             await callListenerAsync(listenerData);
             i++;

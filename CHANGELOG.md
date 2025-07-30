@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 - `wait` in common utils
 
+### Fixed
+
+- `beforeAll` hook in CustomEventEmitter
+
 ## [2.3.0]
 
 ### Added

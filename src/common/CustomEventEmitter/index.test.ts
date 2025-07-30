@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { AppError } from '../AppError';
-
+import { wait } from '../time';
 import { CustomEventEmitter } from './index';
 
 const lockSymbol = Symbol('event unlock');
@@ -316,4 +316,53 @@ describe('CustomEventEmitter', () => {
       'should call debug listener when event is destructed',
     ).toBeCalledWith('eventName', 'destructed', undefined);
   });
+
+  it('should call beforeAll before calling afterAll (sync)', () => {
+    const beforeAll = vi.fn()
+    const afterAll = vi.fn()
+    new CustomEventEmitter<{ awaitedBeforeAll: any }>({
+      awaitedBeforeAll: {
+        runningBehavior: 'sync',
+        beforeAll,
+        afterAll
+      }
+    }).dispatch('awaitedBeforeAll', undefined)
+
+    expect(afterAll).toHaveBeenCalledAfter(beforeAll)
+  })
+
+  it('should call beforeAll before calling afterAll (async)', async () => {
+    const beforeAll = vi.fn()
+    const afterAll = vi.fn()
+    new CustomEventEmitter<{ awaitedBeforeAll: any }>({
+      awaitedBeforeAll: {
+        runningBehavior: 'async',
+        beforeAll,
+        afterAll
+      }
+    }).dispatch('awaitedBeforeAll', undefined)
+
+    await wait()
+
+    expect(afterAll).toHaveBeenCalledAfter(beforeAll)
+  })
+
+  it('should finish beforeAll before calling afterAll (async-sequential)', async () => {
+    const beforeAll = vi.fn()
+    const afterAll = vi.fn()
+    new CustomEventEmitter<{ awaitedBeforeAll: any }>({
+      awaitedBeforeAll: {
+        runningBehavior: 'async-sequential',
+        beforeAll() {
+          return wait().then(beforeAll)
+        },
+        afterAll
+      }
+    }).dispatch('awaitedBeforeAll', undefined)
+
+    await wait()
+    await wait()
+
+    expect(afterAll).toHaveBeenCalledAfter(beforeAll)
+  })
 });
