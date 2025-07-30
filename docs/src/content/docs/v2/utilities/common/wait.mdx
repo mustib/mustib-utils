@@ -1,0 +1,28 @@
+---
+title: wait
+description: A function that returns a promise that resolves after a specified amount of time.
+---
+
+import { Aside, Badge, Code } from '@astrojs/starlight/components';
+
+<Badge text="Type" />: `function`
+<Badge text="since: v2.4.0" />
+
+The **`wait`** function returns a promise that resolves after a specified amount of time. It is useful for adding a delay to your code.
+
+## Usage
+```ts
+import { wait } from '@mustib/utils';
+
+await wait(1000); // wait for 1 second
+```
+
+## Definition
+```ts
+function wait(ms: number): Promise<void> {}
+```
+- `parameters:`
+  1. `ms:` number
+      - The number of milliseconds to wait.
+
+- `returns:` Promise\<void\>
