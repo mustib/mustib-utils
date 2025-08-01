@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "baseUrl": "src",
     "module": "Preserve",
     "moduleResolution": "Bundler",
     "rootDir": "./src",

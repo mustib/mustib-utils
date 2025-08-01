@@ -1,3 +1,4 @@
+import { LIBRARY_ERROR_SCOPE } from '../../constants';
 import { AppError } from '../AppError';
 
 const EVENT_TYPES_PRIORITIES = ['prepend', 'normal'] as const;
@@ -115,6 +116,8 @@ type ListenerData = {
   priority: (typeof EVENT_TYPES_PRIORITIES)[number];
 }
 
+export const customEventEmitterErrorScope = [Symbol('@mustib/utils/CustomEventEmitter'), LIBRARY_ERROR_SCOPE];
+
 export class CustomEventEmitter<
   EventMaps extends Record<string, DefaultEventData>,
 > {
@@ -168,7 +171,11 @@ export class CustomEventEmitter<
       let hasError = false;
 
       if (lockSymbol !== undefined && typeof lockSymbol !== 'symbol') {
-        appError.push('Invalid', `lockSymbol must be of type (symbol)`);
+        appError.push(
+          'Invalid',
+          `lockSymbol must be of type (symbol)`,
+          { scope: customEventEmitterErrorScope }
+        );
         hasError = true;
       }
 
@@ -176,6 +183,7 @@ export class CustomEventEmitter<
         appError.push(
           'Invalid',
           `non dispatchable event (${name as string}) must have lockSymbol`,
+          { scope: customEventEmitterErrorScope }
         );
         hasError = true;
       }
@@ -184,6 +192,7 @@ export class CustomEventEmitter<
         appError.push(
           'Invalid',
           `destructible event (${name as string}) must have lockSymbol`,
+          { scope: customEventEmitterErrorScope }
         );
         hasError = true;
       }
@@ -495,6 +504,9 @@ export class CustomEventEmitter<
       `(${name as string}) is not a valid listener name to ${action}${reason}`,
       {
         stackTraceConstructor: this.throwInvalidEventNameAction,
+        pushOptions: {
+          scope: customEventEmitterErrorScope
+        }
       },
     );
   }

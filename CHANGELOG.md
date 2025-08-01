@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 - `retry` in common utils
 - `LIBRARY_ERROR_SCOPE` constant
+- error scope to utils errors
 
 ## [2.4.0]
 

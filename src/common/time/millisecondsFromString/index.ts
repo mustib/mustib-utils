@@ -1,3 +1,4 @@
+import { LIBRARY_ERROR_SCOPE } from '../../../constants';
 import { AppError } from '../../AppError';
 
 import { timeUnits, type TimeUnitsNames } from '../constants';
@@ -12,6 +13,8 @@ type Options = Partial<{
    */
   unitsAlias: Record<string, TimeUnitsNames>;
 }>;
+
+export const millisecondsFromStringErrorScope = [Symbol.for('@mustib/utils/millisecondsFromString'), LIBRARY_ERROR_SCOPE];
 
 function isValidUnit(unitName: string): unitName is TimeUnitsNames {
   return Object.hasOwn(timeUnits, unitName);
@@ -34,6 +37,7 @@ export function millisecondsFromString(
       return AppError.throw(
         'Unsupported',
         `unsupported time part (${part})`,
+        { pushOptions: { scope: millisecondsFromStringErrorScope } }
       ) as never;
     }
 
@@ -44,6 +48,7 @@ export function millisecondsFromString(
       return AppError.throw(
         'Unsupported',
         `unsupported time unit (${unitName}) in (${part})`,
+        { pushOptions: { scope: millisecondsFromStringErrorScope } }
       ) as never;
     }
 
@@ -53,6 +58,7 @@ export function millisecondsFromString(
       return AppError.throw(
         'Unsupported',
         `unsupported time value (${value}) in (${part})`,
+        { pushOptions: { scope: millisecondsFromStringErrorScope } }
       ) as never;
     }
 

@@ -1,3 +1,4 @@
+import { LIBRARY_ERROR_SCOPE } from '../../../constants';
 import { AppError } from '../../AppError';
 
 import { timeUnitsNamesAsc, timeUnits, maxUnit as _maxUnit, minUnit as _minUnit, type TimeUnitsNames } from '../constants';
@@ -63,6 +64,8 @@ type Options = Partial<{
    */
   separator: string;
 }>;
+
+export const stringFromMillisecondsErrorScope = [Symbol('@mustib/utils/time/stringFromMilliseconds'), LIBRARY_ERROR_SCOPE];
 
 export function stringFromMilliseconds(
   milliseconds: number,
@@ -197,6 +200,7 @@ function getMinAndMaxUnitIndexes({ minUnit, maxUnit }: { minUnit: TimeUnitsNames
     return AppError.throw(
       'Unsupported',
       `unsupported maxUnit (${maxUnit}) it must be one of (${timeUnitsNamesAsc.join(', ')})`,
+      { pushOptions: { scope: stringFromMillisecondsErrorScope } }
     );
   }
 
@@ -204,6 +208,7 @@ function getMinAndMaxUnitIndexes({ minUnit, maxUnit }: { minUnit: TimeUnitsNames
     return AppError.throw(
       'Unsupported',
       `unsupported minUnit (${minUnit}) it must be one of (${timeUnitsNamesAsc.join(', ')})`,
+      { pushOptions: { scope: stringFromMillisecondsErrorScope } }
     );
   }
 
@@ -214,6 +219,7 @@ function getMinAndMaxUnitIndexes({ minUnit, maxUnit }: { minUnit: TimeUnitsNames
     return AppError.throw(
       'Invalid',
       `minUnit (${minUnit}) cannot be greater than maxUnit (${maxUnit})`,
+      { pushOptions: { scope: stringFromMillisecondsErrorScope } }
     );
   }
 
