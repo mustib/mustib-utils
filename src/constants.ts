@@ -1,0 +1,1 @@
+export const LIBRARY_ERROR_SCOPE = Symbol('@mustib/utils');

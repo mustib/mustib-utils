@@ -6,3 +6,4 @@ export * from './mergeTwoObjects';
 export * from './time';
 export * from './parseJson';
 export type * from './types';
+export * from '../constants';
