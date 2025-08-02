@@ -26,6 +26,7 @@ For updates and new features, please refer to the **[CHANGELOG.md](https://githu
 - **[CustomEventEmitter](https://mustib.github.io/mustib-utils/v2/utilities/common/customeventemitter/)**
 - **[millisecondsFromString](https://mustib.github.io/mustib-utils/v2/utilities/common/millisecondsfromstring/)**
 - **[stringFromMilliseconds](https://mustib.github.io/mustib-utils/v2/utilities/common/stringfrommilliseconds/)**
+- **[retry](https://mustib.github.io/mustib-utils/v2/utilities/common/retry/)**
 
 - **[getElementBoundaries](https://mustib.github.io/mustib-utils/v2/utilities/browser/getelementboundaries/)**
 - **[getScrollbarWidth](https://mustib.github.io/mustib-utils/v2/utilities/browser/getscrollbarwidth/)**

@@ -1,0 +1,47 @@
+---
+title: retry
+description: A function that retries a function until it returns a non-undefined value or the maximum number of retries is reached or the total timeout duration elapses.
+---
+import { Aside, Badge, Code } from '@astrojs/starlight/components';
+import ErrorScope from '../../components/ErrorScope.astro'
+
+<Badge text="Type:" /> `function`
+
+<Badge text="since:" /> `2.5.0`
+
+The **`retry`** function will repeatedly retries a function until it returns a non-undefined value or the maximum number of retries is reached or the total timeout duration elapses.
+
+<ErrorScope errorScope='retryErrorScope' />
+
+:::note
+this function does not handle errors thrown by the callback function.
+:::
+
+## Usage
+```ts
+const retryFunction = async () => {
+  const response = await fetch("/some-endpoint");
+  return response.ok ? response.json() : undefined; // only retry if the response is not ok or until timeout or retries are exhausted
+};
+await retry(retryFunction);
+await retry({ retries: 3 }, retryFunction);
+await retry({ timeout: 100 }, retryFunction);
+await retry({ interval: 10 }, retryFunction);
+await retry({ retries: 3, interval: 10, timeout: 100 }, retryFunction);
+```
+
+## Definition
+```ts
+export function retry<T extends () => any>(optionsOrFn: Options | T, fn?: T): Promise<ReturnType<T> | undefined> {}
+```
+
+- `parameters:`
+  1. `optionsOrFn` - Either an options object configuring the retry behavior or the function to retry.
+  2. `fn` - The function to retry if the first argument is an options object.
+- `returns:` a promise that resolves to the first non-undefined value returned by the callback function or undefined if the maximum number of retries is reached or the total timeout duration elapses.
+
+### Options
+
+- `retries` - The maximum number of times to retry the function. Defaults to `3` if `timeout` is `undefined` and `Infinity` if `timeout` is defined.
+- `interval` - The interval in milliseconds between retries. Defaults to `0`.
+- `timeout` - The total timeout duration in milliseconds. Defaults to `undefined`.

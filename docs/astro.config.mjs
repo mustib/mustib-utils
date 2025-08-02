@@ -9,6 +9,13 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'mustib utils',
+      lastUpdated: true,
+      credits: true,
+      description:
+        'A lightweight npm library that provides a collection of commonly used utilities for both web applications and backend services.',
+      editLink: {
+        baseUrl: 'https://github.com/mustib/mustib-utils/edit/main/docs',
+      },
       social: {
         github: 'https://github.com/mustib/mustib-utils',
       },
