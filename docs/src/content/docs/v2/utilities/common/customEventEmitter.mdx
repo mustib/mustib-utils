@@ -4,10 +4,13 @@ description: A class that allows you to emit and listen to custom events.
 ---
 
 import { Aside, Badge, Code } from '@astrojs/starlight/components';
+import ErrorScope from '../../components/ErrorScope.astro'
 
 <Badge text="Type" />: `class`
 
 The **`CustomEventEmitter`** class provides a mechanism to emit and listen to custom events in your application. It supports adding, removing, and dispatching events with options for one-time listeners, event preparation, and debugging. The class enforces rules for destructible and non dispatchable events using lock symbols, ensuring robust event management and error handling.
+
+<ErrorScope errorScope='customEventEmitterErrorScope'/>
 
 ## Usage
 ```ts

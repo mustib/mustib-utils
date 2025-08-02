@@ -4,11 +4,14 @@ description: A function that returns a number of milliseconds from a string repr
 ---
 
 import { Aside, Badge, Code } from '@astrojs/starlight/components';
-import { getUtilityUrl } from '../getUtilityUrl'
+import { getUtilityUrl } from '../../getUrl'
+import ErrorScope from '../../components/ErrorScope.astro'
 
 <Badge text="Type" />: `function`
 
 A function that returns a number of milliseconds from a string representation of time.
+
+<ErrorScope errorScope='millisecondsFromStringErrorScope'/>
 
 ## Usage
 ```ts

@@ -2,7 +2,7 @@
 title: Getting Started
 ---
 
-import { FileTree } from '@astrojs/starlight/components';
+import { getConstantUrl, getUtilityUrl } from '../v2/getUrl';
 
 This [package](https://github.com/mustib/mustib-utils) is a collection of utilities that I use in nearly every project.<br />
 It was part of one of my learning projects, but since it became bigger, and I needed
@@ -18,11 +18,20 @@ npm install @mustib/utils@latest
 
 ## Usage:
 
-exports are divided into 3 categories:
+### Categories
 
-- **`/`** for common utilities that work in both **node** and **browser** environments
-- **`/node`** for **node** environments
-- **`/browser`** for **browser** environments
+- exports are divided into 3 categories:
+  - **`/`** for common utilities that work in both **node** and **browser** environments
+  - **`/node`** for **node** environments
+  - **`/browser`** for **browser** environments
+
+- each category exports a global <a target="_blank" href={`${getConstantUrl('index')}`}>constants</a> variables.
+
+- common utilities can be imported from both **/node** and **/browser**
+
+- all utilities are exported as **named exports** under their category
+
+- both **ESM** and **CJS** are supported depending on your package manager configuration (e.g. `import` vs `require`)
 
 ```js
 // common utilities
@@ -35,37 +44,14 @@ import { EnvVars } from '@mustib/utils/node';
 import { getElementBoundaries } from '@mustib/utils/browser';
 ```
 
-:::note
-common utilities can be imported from both **/node** and **/browser**
+### Error Handling
+each utility that might throw an error will use <a target="_blank" href={`${getUtilityUrl('common', 'apperror')}`}>AppError</a> class to manage and handle errors in an application. To help filter errors for both scopes: this utility and the library as a whole, each utility that throws errors will export an array of symbols called <a target="_blank" href={`${getUtilityUrl('common', 'apperror', 'errorscope')}`}>error scope</a> which includes the global <a target="_blank" href={`${getConstantUrl('LIBRARY_ERROR_SCOPE')}`}>LIBRARY_ERROR_SCOPE</a> constant.
+  - the exported scopes name should start with the utility name with first letter in lowercase and then ErrorScope like this: `utilityNameErrorScope`
+  - it will be stated at the top of each utility docs page the exported error scope variable name if it exports them
+
+:::note[Important Note]
+The exported scope array will also include the global
+<a target="_blank" href={`${getConstantUrl('LIBRARY_ERROR_SCOPE')}`}>LIBRARY_ERROR_SCOPE</a> constant,
+this is useful to filter errors for both scopes: this utility and the library as a whole,
+and to only get errors for specific utility, you can use the `includesScope` and `excludesScope` options of <a target="_blank" href={`${getUtilityUrl('common', 'apperror', 'tostring')}`}>appError.toString()</a> method.
 :::
-
-## Available Utils
-
-<FileTree>
-- /
-  - AppError
-  - capitalize
-  - getTypeOf
-  - parseJson
-  - millisecondsFromString
-  - stringFromMilliseconds
-  - CustomEventEmitter
-  - mergeTwoObjects
-
-- /node
-
-  - EnvVars
-  - getDirName
-  - TypedEventEmitter
-
-- /browser
-  - getElementBoundaries
-  - getScrollbarWidth
-
-</FileTree>
-
-:::note
-
-- All utilities are exported as **named exports** under their category
-- Both **ESM** and **CJS** are supported depending on your package manager configuration (e.g. `import` vs `require`)
-  :::

@@ -1,0 +1,16 @@
+---
+title: LIBRARY_ERROR_SCOPE
+description: a collection of constants that are used in @mustib/utils
+---
+
+import { Aside, Badge } from '@astrojs/starlight/components';
+
+import { getUtilityUrl } from '../../getUrl'
+
+<Badge text='Type:' /> `symbol`
+
+<Badge text='since:' /> `v2.5.0`
+
+The global scope of errors thrown by utilities using <a target="_blank" href={getUtilityUrl('common', 'apperror', 'errorscope')}>AppError</a> which will be used to help filter library specific errors.
+
+Each utility that uses <a target="_blank" href={getUtilityUrl('common', 'apperror', 'errorscope')}>AppError</a> should `export` error scope array which include this variable to help filter errors for this specific utility.

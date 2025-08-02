@@ -3,10 +3,13 @@ title: EnvVars
 description: A versatile utility for handling environment variables
 ---
 import { Aside, Code, Badge, Steps } from '@astrojs/starlight/components';
+import ErrorScope from '../../components/ErrorScope.astro'
 
 <Badge text="Type" />: `class`
 
 The `EnvVars` class is a versatile utility designed for type-safe access to environment variables. It simplifies handling environment variables by offering features such as type parsing, retrieving values tailored to specific environments, reading from various sources, and marking variables as dynamic. Additionally, it ensures robust error handling, preventing your application from proceeding with unexpected behavior when issues arise.
+
+<ErrorScope errorScope='envVarsCustomEventEmitterErrorScope'/>
 
 **Imagine the following scenario:**
 ```ts

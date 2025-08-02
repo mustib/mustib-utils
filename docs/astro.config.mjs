@@ -23,6 +23,10 @@ export default defineConfig({
           label: 'Utilities',
           autogenerate: { directory: 'v2/utilities' },
         },
+        {
+          label: 'Constants',
+          autogenerate: { directory: 'v2/constants' },
+        },
       ],
     }),
   ],

@@ -1,0 +1,35 @@
+---
+import { getUtilityUrl } from '../getUrl';
+
+interface Props {
+  errorScope: string;
+}
+const { errorScope } = Astro.props;
+---
+
+<div>
+  The <code>{errorScope}</code>
+  <a
+    target="_blank"
+    href={`${getUtilityUrl('common', 'apperror', 'errorscope')}`}
+    >app error scope array</a
+  >
+  is exported by this utility and can be used to filter thrown
+  <a target="_blank" href={`${getUtilityUrl('common', 'apperror')}`}>AppError</a
+  >
+  by scope for this specific utility.
+  <div>
+    To learn more about error handling please refer to
+    <a
+      target="_blank"
+      href="/mustib-utils/start-guide/getting-started#error-handling"
+    >
+      error handling section
+    </a>
+    of the getting started guide, and the <a
+      target="_blank"
+      href={`${getUtilityUrl('common', 'apperror')}`}>AppError</a
+    >
+    documentation.
+  </div>
+</div>
