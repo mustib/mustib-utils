@@ -34,6 +34,11 @@ export default defineConfig({
           label: 'Constants',
           autogenerate: { directory: 'v2/constants' },
         },
+        {
+          label: 'Canary',
+          badge: 'upcoming',
+          autogenerate: { directory: 'canary' },
+        },
       ],
     }),
   ],
