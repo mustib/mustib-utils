@@ -4,14 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
-## [Unreleased]
+## [2.6.0.canary.2]
+
+### Added
+
+- `getScrollbarWidth` options in browser utils
+- `disableElementScroll` in browser utils
+- `enableElementScroll` in browser utils
+
+## [2.6.0.canary.1]
 
 ### Added
 
 - `closestPierce` in browser utils
-- `getScrollbarWidth` options in browser utils
-- `disableElementScroll` in browser utils
-- `enableElementScroll` in browser utils
 
 ## [2.5.1]
 

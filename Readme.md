@@ -29,6 +29,8 @@ For updates and new features, please refer to the **[CHANGELOG.md](https://githu
 - **[retry](https://mustib.github.io/mustib-utils/v2/utilities/common/retry/)**
 
 - **[closestPierce](https://mustib.github.io/mustib-utils/v2/utilities/browser/closestpierce/)**
+- **[disableElementScroll](https://mustib.github.io/mustib-utils/v2/utilities/browser/disableelementscroll/)**
+- **[enableElementScroll](https://mustib.github.io/mustib-utils/v2/utilities/browser/enableelementscroll/)**
 
 - **[getElementBoundaries](https://mustib.github.io/mustib-utils/v2/utilities/browser/getelementboundaries/)**
 - **[getScrollbarWidth](https://mustib.github.io/mustib-utils/v2/utilities/browser/getscrollbarwidth/)**
