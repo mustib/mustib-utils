@@ -1,0 +1,40 @@
+---
+title: throttle
+description: A function that returns a throttled version of a function
+sidebar:
+  badge: new
+---
+
+import { Aside, Badge, Code } from '@astrojs/starlight/components';
+
+<Badge text="type: function" />
+<br />
+<Badge text="since: v2.6.0" />
+
+The **`throttle`** function returns a throttled version of a function that, when invoked repeatedly, will only call the original function at most once every `ms` milliseconds.
+
+The **`throttle`** function is used to limit the number of times a function is called within a short period of time, such as scroll events. This can significantly improve performance, especially if the function is expensive or computationally heavy.
+
+## Usage
+```ts
+import { throttle } from '@mustib/utils';
+
+const fn = throttle(() => {
+  console.log('throttled')
+}, 100)
+
+fn();fn();fn(); // logs "throttled" once
+```
+
+## Definition
+```ts
+function throttle<T extends Func = Func>(func: T, ms = 100): T {}
+```
+- `parameters:`
+  1. `func:` function
+      - The function to throttle.
+  2. `ms:` number
+      - <Badge text='default: 100' />
+      - The number of milliseconds to throttle invocations to.
+
+- `returns:` Throttled version of the input function

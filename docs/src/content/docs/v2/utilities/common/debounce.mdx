@@ -1,0 +1,40 @@
+---
+title: debounce
+description: A function that returns a debounced version of a function
+sidebar:
+  badge: new
+---
+
+import { Aside, Badge, Code } from '@astrojs/starlight/components';
+
+<Badge text="type: function" />
+<br />
+<Badge text="since: v2.6.0" />
+
+The **`debounce`** function returns a debounced version of a function that, when invoked repeatedly, will only call the original function at most once every `ms` milliseconds after the last invocation of the debounced function.
+
+The **`debounce`** function is used to prevent a function from being called excessively in a short period of time, such as when a user is typing in a text field. By debouncing the function, it will only be called once the specified time period has elapsed since the last invocation of the debounced function. This can significantly improve performance and reduce the number of unnecessary API calls.
+
+## Usage
+```ts
+import { debounce } from '@mustib/utils';
+
+const fn = debounce(() => {
+  console.log('debounced')
+}, 100)
+
+fn();fn();fn(); // logs "debounced" once
+```
+
+## Definition
+```ts
+function debounce<T extends Func = Func>(func: T, ms = 100): T {}
+```
+- `parameters:`
+  1. `func:` function
+      - The function to debounce.
+  2. `ms:` number
+      - <Badge text='default: 100' />
+      - The number of milliseconds to debounce invocations by.
+
+- `returns:` debounced version of the input function
