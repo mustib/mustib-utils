@@ -1,10 +1,12 @@
 export * from './AppError';
 export * from './capitalize';
 export * from './CustomEventEmitter';
+export * from './debounce';
 export * from './getTypeof';
 export * from './mergeTwoObjects';
 export * from './retry';
 export * from './time';
+export * from './throttle';
 export * from './parseJson';
 export type * from './types';
 export * from '../constants';
