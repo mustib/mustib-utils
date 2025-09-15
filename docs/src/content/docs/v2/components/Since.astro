@@ -1,0 +1,8 @@
+---
+import { Badge } from '@astrojs/starlight/components';
+type Props = {
+  since: string;
+};
+---
+
+<Badge text=`since: v${Astro.props.since}` />

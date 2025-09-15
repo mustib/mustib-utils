@@ -1,9 +1,48 @@
 ---
 title: closestPierce
+description: A closest function that works for shadow dom elements too
 sidebar:
-  badge: canary
+  badge: new
 ---
 
-import UnderConstruction from '../../components/UnderConstruction.astro'
+import { Badge } from '@astrojs/starlight/components'
+import { Parameters, Returns, TypeSince } from '../../components'
 
-<UnderConstruction />
+<TypeSince type='function' since='2.6.0' />
+
+The `closestPierce` function is a utility function that extends the capabilities of the native `Element.closest` method by traversing shadow DOM boundaries. This means that it can be used to find the closest element matching a given selector, even if that element is contained within a shadow DOM.
+
+## Usage
+```ts
+import { closestPierce } from '@mustib/utils/browser';
+
+closestPierce('light dom selector', elementOrShadowDomElement)
+```
+
+## Definition
+```ts
+function closestPierce(
+  selector: string,
+  startEl: HTMLElement | null
+): HTMLElement | null { }
+```
+<Parameters 
+  parameters={[
+    {
+      name:'selector',
+      type:'string',
+      description: [
+        'The CSS selector to search for.'
+      ]
+    },
+    {
+      name: 'startEl',
+      type: 'HTMLElement | null',
+      description: [
+        'The element from which to start searching.',
+      ]
+    }
+  ]}
+/>
+
+<Returns type='HTMLElement | null' />

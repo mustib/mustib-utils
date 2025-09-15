@@ -1,0 +1,8 @@
+---
+import { Badge } from '@astrojs/starlight/components';
+type Props = {
+  type: string;
+};
+---
+
+<Badge text=`type: ${Astro.props.type}` />

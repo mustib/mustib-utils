@@ -1,0 +1,27 @@
+---
+import { Badge } from '@astrojs/starlight/components';
+import Type from './Type.astro';
+
+type Props = {
+  type: string;
+  details?: (string | ((...args: any[]) => any))[];
+};
+---
+
+<ul>
+  <li>
+    <p>
+      <code>returns</code>
+      <Type type={Astro.props.type} />
+    </p>
+    {
+      Astro.props.details && (
+        <ul>
+          {Astro.props.details.map((Line) => (
+            <li>{typeof Line === 'string' ? Line : <Line />}</li>
+          ))}
+        </ul>
+      )
+    }
+  </li>
+</ul>
