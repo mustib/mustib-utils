@@ -5,11 +5,13 @@ sidebar:
   badge: new
 ---
 
-import { Aside, Badge, Code } from '@astrojs/starlight/components';
+import {
+  TypeSince,
+  Returns,
+  Parameters
+} from '../../components'
 
-<Badge text="type: function" />
-<br />
-<Badge text="since: v2.6.0" />
+<TypeSince since='2.6.0' type='function'/>
 
 The **`throttle`** function returns a throttled version of a function that, when invoked repeatedly, will only call the original function at most once every `ms` milliseconds.
 
@@ -28,13 +30,30 @@ fn();fn();fn(); // logs "throttled" once
 
 ## Definition
 ```ts
-function throttle<T extends Func = Func>(func: T, ms = 100): T {}
+function throttle<T extends Func = Func>(
+  func: T,
+  ms = 100
+): T { }
 ```
-- `parameters:`
-  1. `func:` function
-      - The function to throttle.
-  2. `ms:` number
-      - <Badge text='default: 100' />
-      - The number of milliseconds to throttle invocations to.
+<Parameters parameters={[
+  {
+    name: 'func',
+    type: 'Function',
+    description: [
+      'The function to throttle.',
+    ]
+  },
 
-- `returns:` Throttled version of the input function
+  {
+    name: 'ms',
+    type: 'number',
+    defaultValue: '100',
+    description: [
+      'The number of milliseconds to throttle invocations to.'
+      ]
+  }
+]}/>
+
+<Returns type='Function' details={[
+  'Throttled version of the input function',
+]}/>
