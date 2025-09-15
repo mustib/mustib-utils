@@ -28,6 +28,8 @@ For updates and new features, please refer to the **[CHANGELOG.md](https://githu
 - **[stringFromMilliseconds](https://mustib.github.io/mustib-utils/v2/utilities/common/stringfrommilliseconds/)**
 - **[retry](https://mustib.github.io/mustib-utils/v2/utilities/common/retry/)**
 
+- **[throttle](https://mustib.github.io/mustib-utils/v2/utilities/common/throttle/)**
+- **[debounce](https://mustib.github.io/mustib-utils/v2/utilities/common/debounce/)**
 - **[closestPierce](https://mustib.github.io/mustib-utils/v2/utilities/browser/closestpierce/)**
 - **[disableElementScroll](https://mustib.github.io/mustib-utils/v2/utilities/browser/disableelementscroll/)**
 - **[enableElementScroll](https://mustib.github.io/mustib-utils/v2/utilities/browser/enableelementscroll/)**
