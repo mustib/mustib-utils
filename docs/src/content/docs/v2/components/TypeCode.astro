@@ -1,0 +1,9 @@
+---
+import { Code } from '@astrojs/starlight/components';
+type Props = {
+  type: string;
+  name?: string;
+};
+---
+
+<Code lang="ts" code=`type ${Astro.props.name || 'T'} = ${Astro.props.type};` />

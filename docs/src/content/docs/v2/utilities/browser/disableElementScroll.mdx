@@ -1,9 +1,81 @@
 ---
 title: disableElementScroll
+description: A function that disables scrolling on an element
 sidebar:
-  badge: canary
+  badge: new
 ---
 
-import UnderConstruction from '../../components/UnderConstruction.astro'
+import {
+  TypeSince,
+  Parameters,
+  Default,
+  DescriptionList, Returns
+} from '../../components'
 
-<UnderConstruction />
+<TypeSince since='2.6.0' type='function' />
+
+The `disableElementScroll` function is a utility that temporarily locks the scroll position of an element, effectively disabling scrolling. This is particularly useful when you want to prevent scrolling on a specific element, such as during a modal or overlay.
+
+## Usage
+```ts
+import { disableElementScroll } from '@mustib/utils/browser';
+
+disableElementScroll();
+```
+
+## Definition
+```ts
+function disableElementScroll(options?: Partial<{
+  element: HTMLElement,
+  scrollbarElement?: HTMLElement | Document
+}>): void { }
+```
+
+<Parameters parameters={[
+  {
+    name: 'options',
+    type: `{
+      element?: HTMLElement,
+      scrollbarElement?: HTMLElement | Document
+    }`,
+    defaultValue: `{ 
+    element: document.body,
+    scrollbarElement: document
+  }`,
+    description: [
+      () => <>
+        <code>options.element</code>
+
+        <DescriptionList list={[
+            'The element to disable scrolling on.',
+
+            () => <Default value='document.body'/>,
+          ]}
+        />
+      </>,
+
+      () => <>
+        <code>options.scrollbarElement</code>
+
+        <DescriptionList list={[
+            'The element that actually contains the scrollbar.',
+            
+            'It is used to calculate the scrollbar size.',
+
+            'This is important because the element you want to disable scrolling on may not be the one displaying the scrollbar.',
+
+            () => <>
+              For example, when disabling scroll on the <code>body</code>, the scrollbar is typically on the <code>document</code>, not the <code>body</code> itself.
+            </>,
+
+            'Setting this property correctly prevents layout shifts or unwanted content movement.',
+            
+            () => <Default value='document.body'/>,
+          ]}
+        />
+      </>,
+    ]
+  }
+]} />
+
+<Returns type='void'/>

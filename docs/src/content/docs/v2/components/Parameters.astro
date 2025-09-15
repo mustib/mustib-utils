@@ -1,11 +1,14 @@
 ---
-import { Badge } from '@astrojs/starlight/components';
+import { Badge, Code } from '@astrojs/starlight/components';
 import Type from './Type.astro';
+import TypeCode from './TypeCode.astro';
+import DescriptionList from './DescriptionList.astro';
 
 type Props = {
   parameters: {
     name: string;
     type: string;
+    defaultValue?: string;
     description?: (string | ((...args: any[]) => any))[];
   }[];
 };
@@ -13,22 +16,21 @@ type Props = {
 const { parameters } = Astro.props;
 ---
 
-<ul>
-  <li><code>parameters</code></li>
-  <ol>
-    {
-      parameters.map(({ name, type, description }) => (
-        <li>
-          <code>{name}</code>
-          <Type type={type} />
-          <ul>
-            {description &&
-              description.map((Line) => (
-                <li>{typeof Line === 'string' ? Line : <Line />}</li>
-              ))}
-          </ul>
-        </li>
-      ))
-    }
-  </ol>
-</ul>
+<h3>Parameters</h3>
+<ol>
+  {
+    parameters.map(({ name, type, description, defaultValue }) => (
+      <li>
+        <code>{name}</code>
+        <TypeCode name={name} type={type} />
+
+        {defaultValue !== undefined && (
+          <Code lang="ts" code=`/* default value */\nconst ${name} = ${defaultValue};` />
+        )}
+         {description && 
+         <DescriptionList list={description}/>
+         }
+      </li>
+    ))
+  }
+</ol>

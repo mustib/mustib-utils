@@ -1,0 +1,11 @@
+---
+type Props = {
+  list: (string | ((...args: any[]) => any))[];
+};
+
+const { list } = Astro.props;
+---
+
+<ul>
+  {list.map((Line) => <li>{typeof Line === 'string' ? Line : <Line />}</li>)}
+</ul>

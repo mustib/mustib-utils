@@ -1,0 +1,9 @@
+---
+import { Badge, Code } from '@astrojs/starlight/components';
+
+type Props = {
+  value: string;
+};
+---
+
+<Badge text="default:" /><Code code={Astro.props.value} lang="ts" />
