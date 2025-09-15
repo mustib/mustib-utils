@@ -12,9 +12,17 @@ import {
   DescriptionList, Returns
 } from '../../components'
 
+import { getUtilityUrl } from '../../getUrl'
+
+import { Aside } from '@astrojs/starlight/components'
+
 <TypeSince since='2.6.0' type='function' />
 
 The `disableElementScroll` function is a utility that temporarily locks the scroll position of an element, effectively disabling scrolling. This is particularly useful when you want to prevent scrolling on a specific element, such as during a modal or overlay.
+
+<Aside type='tip'>
+To re-enable scroll again you can use <a target='blank' href={getUtilityUrl('browser', 'enableelementscroll')}>enableElementScroll</a> utility
+</Aside>
 
 ## Usage
 ```ts

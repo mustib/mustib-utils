@@ -1,9 +1,56 @@
 ---
 title: enableElementScroll
+description: A function that enables element scroll after disabling it
 sidebar:
-  badge: canary
+  badge: new
 ---
 
-import UnderConstruction from '../../components/UnderConstruction.astro'
+import {
+  TypeSince,
+  Parameters,
+  DescriptionList,
+  Default,
+  Returns,
+} from '../../components'
 
-<UnderConstruction />
+import { getUtilityUrl } from '../../getUrl'
+
+<TypeSince type='function' since='2.6.0'/>
+
+The `enableElementScroll` function is used to re-enable element scroll after disabling it with <a href={getUtilityUrl('browser', 'disableelementscroll')}>disableElementScroll</a> utility
+
+## Usage
+```ts
+import { enableElementScroll } from '@mustib/utils/browser'
+
+enableElementScroll()
+```
+
+## Definition
+```ts
+function enableElementScroll(options?: {
+  element?: HTMLElement
+}) { }
+```
+
+<Parameters parameters={[
+  {
+    name: 'options',
+    type: '{\n\telement: HTMLElement,\n}',
+    defaultValue: `{\n\telement: document.body,\n}`,
+    description: [
+      () => <>
+        <code>options.element</code>
+
+        <DescriptionList list={[
+            'The element to enable scrolling on.',
+
+            () => <Default value='document.body'/>,
+          ]}
+        />
+      </>,
+    ]
+  }
+]}/>
+
+<Returns type='void'/>
