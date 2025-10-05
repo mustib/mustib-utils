@@ -1,7 +1,7 @@
 import { AppError } from "../common";
 import { LIBRARY_ERROR_SCOPE } from "../constants";
 
-const getScrollbarWidthErrorScope = [Symbol('@mustib/utils/getScrollbarWidth'), LIBRARY_ERROR_SCOPE]
+export const getScrollbarWidthErrorScope = [Symbol('@mustib/utils/getScrollbarWidth'), LIBRARY_ERROR_SCOPE]
 
 /**
  * Returns the width of the scrollbar for a given HTML element or the document.
