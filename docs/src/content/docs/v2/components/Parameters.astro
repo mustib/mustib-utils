@@ -3,11 +3,13 @@ import { Badge, Code } from '@astrojs/starlight/components';
 import Type from './Type.astro';
 import TypeCode from './TypeCode.astro';
 import DescriptionList from './DescriptionList.astro';
+import Since from './Since.astro';
 
 type Props = {
   parameters: {
     name: string;
     type: string;
+    since?: string;
     defaultValue?: string;
     description?: (string | ((...args: any[]) => any))[];
   }[];
@@ -19,9 +21,15 @@ const { parameters } = Astro.props;
 <h3>Parameters</h3>
 <ol>
   {
-    parameters.map(({ name, type, description, defaultValue }) => (
+    parameters.map(({ name, type, description, defaultValue, since }) => (
       <li>
         <code>{name}</code>
+        {since && 
+          <>
+            <br />
+            <Since since={since} />
+          </>
+        }
         <TypeCode name={name} type={type} />
 
         {defaultValue !== undefined && (

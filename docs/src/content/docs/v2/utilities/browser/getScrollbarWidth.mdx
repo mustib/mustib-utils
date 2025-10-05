@@ -12,7 +12,7 @@ import {
   Returns  
 } from '../../components'
 
-<TypeSince type='function' since='2.6.0'/>
+<TypeSince type='function' since='1.0.5'/>
 
 The **`getScrollbarWidth`** function is used to get the scrollbar width of an element on a given direction.
 
@@ -38,6 +38,7 @@ function getScrollbarWidth(options?: Partial<{
 <Parameters parameters={[
   {
     name: 'options',
+    since: '2.6.0' ,
     type: "{\n\telement?: Element | Document | null,\n\tdirection?: 'x' | 'y',\n}",
     defaultValue: "{ element = document, direction = 'y' }",
     description: [
