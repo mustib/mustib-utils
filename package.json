@@ -1,6 +1,6 @@
 {
   "name": "@mustib/utils",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "description": "a lightweight npm library that provides a collection of commonly used utilities. Whether you’re working on web applications, APIs, or backend services, these tools simplify repetitive tasks and enhance productivity",
   "type": "module",
   "license": "MIT",
