@@ -1,13 +1,22 @@
 ---
 title: getScrollbarWidth
-description: A function that returns the width of the vertical scrollbar.
+description: A function that returns the scrollbar width of an element on a given direction.
 ---
 
-import { Badge } from '@astrojs/starlight/components';
+import {
+  TypeSince,
+  ErrorScope,
+  Parameters,
+  DescriptionList,
+  Default,
+  Returns  
+} from '../../components'
 
-<Badge text="Type" />: `function`
+<TypeSince type='function' since='2.6.0'/>
 
-A function that returns the width of the vertical scrollbar.
+The **`getScrollbarWidth`** function is used to get the scrollbar width of an element on a given direction.
+
+<ErrorScope errorScope='getScrollbarWidthErrorScope' />
 
 ## Usage
 ```ts
@@ -17,3 +26,48 @@ const scrollbarWidth = getScrollbarWidth();
 
 console.log(scrollbarWidth);
 ```
+
+## Definition
+```ts
+function getScrollbarWidth(options?: Partial<{
+  element: Element | Document | null,
+  direction: 'x' | 'y',
+}>): number { }
+```
+
+<Parameters parameters={[
+  {
+    name: 'options',
+    type: "{\n\telement?: Element | Document | null,\n\tdirection?: 'x' | 'y',\n}",
+    defaultValue: "{ element = document, direction = 'y' }",
+    description: [
+      () => <>
+        <code>options.element</code>
+
+        <DescriptionList list={[
+            'The element to get the scrollbar width from.',
+
+            () => <Default value='document'/>,
+          ]}
+        />
+      </>,
+
+      () => <>
+        <code>options.direction</code>
+
+        <DescriptionList list={[
+            'The direction to get the scrollbar width from.',
+
+            () => <> <code>'x'</code> for horizontal, <code>'y'</code> for vertical.</>,
+
+            () => <Default value="'y'"/>,
+        ]}
+        />
+      </>,
+    ]
+  }
+]} />
+
+<Returns type='number' details={[
+  'The scrollbar width in pixels.',
+]}/>
