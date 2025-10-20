@@ -1,0 +1,929 @@
+---
+title: EventAction
+description: A class that simplifies event handling
+sidebar:
+  badge: new
+---
+
+import { TypeSince, Type, Parameters, DescriptionList, Returns } from '../../components'
+import { Code, Badge, Aside, Steps } from '@astrojs/starlight/components'
+
+import { getUtilityUrl } from '../../getUrl'
+
+export function GenericT() {
+  return (
+    <div>
+      <code>T</code> is the generic type passed to the <code>EventAction&lt;T&gt;</code> on instantiation to improve intellisense for the action <code>handler</code> and <code>generateDataHandler</code> methods.
+      <br />
+      See <a href='#customaction'>CustomAction</a> for more details about these two methods.
+    </div>
+  )
+}
+
+
+<TypeSince type='class' since='2.7.0' />
+
+
+<details open>
+  <summary>A problem with event handling</summary>
+  <div>
+    When working on my <b><a href='#'>UI library</a></b> <i>(Which I didn't publish yet)</i>, I always put customization in mind, so users can easily build on top of it.
+    But that left me with a big <b>event handling</b> challenge, specially when working on a complex component like <b>AutoComplete</b>.
+  </div>
+  
+  <p><b>To solve it:</b></p>
+  <ul>
+    <li>
+      I first created a <b>trigger</b> component,
+      which solved the problem but introduced a couple of new problems.
+      Because I had to add a lot of triggers and multiple triggers to the same component where some of them needed to only stop propagation so parents don't get the event.
+      so for a toggle button component I had to add a click trigger and a pointerdown trigger to stop propagation and that is not good for performance as I had to do this for a lot of components.
+    </li>
+    <li>
+      I also thought of adding a one listener on the parent, but that will not be customizable, and I will have to check for multiple targets (like toggle button, input, etc) for each event.
+    </li>
+    <li>
+      Finally I came up with the idea of using <b>EventAction</b> and it solved all my problems in a simple and customizable way. Now I only add <b>one listener</b> on the parent (don't matter which event triggered) and <b>add actions</b> to the matched target for that event. The parent instantiate <b>EventAction</b>, add the actions to it, then register the event names to listen to, and that's it for event handling <b>(very easy to implement, maintain, and more importantly customizable and performant)</b>.
+    </li>
+  </ul>
+</details>
+
+<br />
+
+An <b>EventAction</b> is simply a way of <b>describing</b> what to do when an <b>event</b> is triggered on a registered parent element through the <b>html</b>. This is done by declaring <b>actions and switches</b> through html <b>attributes</b> for that event and register the parent to listen to that event, and define what happens when that action is triggered after verifying the switches --if any--, then let <b>EventAction</b> do the rest.
+
+A very simple example:
+```html
+<!-- if parent is registered to listen to click events through EventAction it will log 'btn clicked' and prevent default when button is clicked -->
+<button data-click="#log:btn clicked && #prevent">Click me</button>
+```
+You can think of the previous example as this: if this button clicked log `'btn clicked'` and prevent default.
+where `#log` and `#prevent` are actions, `btn clicked` is an action param, and `&&` is used to chain actions.
+
+## Usage
+```html
+<script type="module">
+  import { EventAction } from '@mustib/utils';
+  
+  new EventAction({
+    actions: {
+      'action-name'(data) {
+        console.log('action-name triggered with param', data.actionParam)
+      },
+    },
+    switches: {
+      'switch-name': {
+        handler: (data) => Math.random() > 0.5,
+        dynamic: true
+      },
+    }
+  }).addListeners(document.body, ['click']);
+</script>
+
+<button data-click="switch-name? action-name:1">Btn 1</button>
+<button data-click="switch-name? action-name:2">Btn 2</button>
+```
+
+## Roles of actions
+
+- Each action must have a predefined name, an optional param, and possibly some switches.
+- Each switch must have a predefined name and an optional param.
+- Actions are executed in the order they are declared.
+- Switches on the same action are executed in the order they are declared.
+- Switches are like if statements, can be used to conditionally execute actions.
+- If any switch is false, then other switches are not executed, and we move to the next action (if any).
+- Switches belong to an action, can only be used on that action, but they can be repeated on different actions to do different things if they are true.
+- Switches can be repeated for the same action with the same param or different params.
+- Each action should be responsible for only one thing, and you can use action params to pass data to the action.
+- If `||` precedes the action name (has or) it means to stop executing the rest of the actions for the current event if that action gets executed
+- When using `||` there must be no spaces between it and the action name
+
+## How to write actions
+
+Actions are defined through a normal html attribute value which can be one of two things:
+1. A Json Array.
+2. A String.
+
+### Action String Syntax
+
+```txt
+switch1:switch1Param? switch2:switch2Param? ||action:actionParam &&
+switch3:switch3Param? ||action:actionParam
+```
+- Actions are separated by `&&` and Switches must end with `?` after the param (if any) to indicate that it is a switch not an action.
+- Use `:` to separate the action name from the param.
+- Use `:` to separate the switch name from the param.
+- You can add as many spaces as you want before and after the `:`, `?`, `&&`.
+
+
+### Action Array Syntax
+
+1.  An array of action strings. 
+    <Code lang='json' code={`
+      [\n\t"switch1:switch1Param? switch2:switch2Param? ||action:actionParam",\n\t"switch3:switch3Param? ||action:actionParam"\n]
+      `}
+    />
+
+    Which follows the same rules as the [action string syntax](#action-string-syntax) except that the actions are not separated by `&&` but they are an array of actions.
+
+2.  An array of action arrays.
+    <Code lang='json' code={`
+      [\n\t["||action", "actionParam", "switch1:switch1Param", "switch2:switch2Param"],\n\t["||action", "actionParam", ["switch3", "switch3Param"]]\n]
+      `}
+    />
+
+    This is useful if you want to pass action params or switch params other than a string.
+
+    Each array of actions must have at least the action name as the first index, and an optional param as the second index, then the rest is switches.
+
+    Each switch can be a string which can has `:` to separate the switch name from the param, or an array which has the switch name as the first index and an optional param as the second index.
+
+    :::note
+      Did you noticed how `switch3` is written in the previous example? <br />
+      This can be useful to pass switch params other than a string.
+    :::
+
+3.  An array of action strings and action arrays.
+    <Code lang='json' code={`
+      [\n\t"switch1:switch1Param? switch2:switch2Param? ||action:actionParam",\n\t["||action", "actionParam", ["switch3", "switch3Param"]]\n]
+      `}
+    />
+    
+
+:::note
+Don't forget `||` followed by action name is used to stop executing the rest of the actions if that action is triggered.
+:::
+
+### Roles of naming actions
+
+- Action names must be unique.
+- They should not start with `#` as that is reserved for default actions.
+- They should not contain '?' or '&&' or ':'
+- Its recommended to name them in kebab-case, but you can use any naming convention as long as it doesn't break [how-to-write-actions](#how-to-write-actions).
+
+## Performance
+- `EventAction` is designed to be performant, you only add one listener on the parent.
+- `EventAction` Will memoize parsed action strings and action arrays after the first time it is parsed, so it doesn't have to do that every time.
+- `EventAction` will memoize the switch result through the current event cycle, if it is not dynamic and the switch param does not changed, so even if you are using the same switch multiple times for the same action or different actions, it will only execute the switch once.
+
+## Default Actions
+- `#prevent` calls `event.preventDefault()`.
+- `#stop` calls `event.stopPropagation()`.
+- `#debug` logs data about the current event, action, and switches to the console.
+- `#log` is passed a param it will be logged otherwise it will log info about the current event, action, and switches.
+- `#nothing` does nothing, you can thing of this as a return now and do nothing, or `stopPropagation` but unlike `stopPropagation` it allows other listeners to run.
+
+:::note
+The static property `EventAction.defaultActions` contains the default actions which are globally available.<br/>
+You can add your custom global actions there as a <code>Record&lt;string, <a href='#registeredactiondata'>RegisteredActionData</a>&gt;</code> where keys are action names.<br/>
+This can be useful if you have actions that are used throughout your application.<br/>
+Don't forget that actions names starting with `#` are reserved for internal actions.
+:::
+
+## Default Switches
+- `#key` runs for `KeyboardEvents` and expects a param of the keys to check if any of them are pressed.
+  - `param` can be a comma separated list of keys or an array of keys (for [action array syntax](#action-array-syntax)).
+  - `Space` is a replacement for `' '` (space) (only for [string syntax](#action-string-syntax])).
+
+- `#special-key` runs for `KeyboardEvents` and expects a param of special keys to check if any of them are pressed.
+  - special keys are `ctrl` `alt` `shift` `meta`
+
+:::note
+The static property `EventAction.defaultSwitches` contains the default switches which are globally available.<br/>
+You can add your custom global switches there as a <code>Record&lt;string, <a href='#registeredswitchdata'>RegisteredSwitchData</a>&gt;</code> where keys are switch names.<br/>
+This can be useful if you have switches that are used throughout your application.<br/>
+Don't forget that switches names starting with `#` are reserved for internal switches.
+:::
+
+
+## Workflow
+
+<Steps>
+
+1. Start by creating a new `EventAction` instance.
+   
+   ```ts
+   const eventAction = new EventAction()
+   ```
+
+2. Add your custom actions and switches (you can do that in the constructor too)
+   
+   ```ts
+   eventAction.registerActions({
+     'action-name': (data) => {console.log('dispatched action param', data.actionParam)},
+   });
+   
+   eventAction.registerSwitches({
+     'switch-name': {
+        handler: (data) => {return Math.random() > Number(data.switchParam) ?? 0.5},
+        dynamic: true,
+     }
+   })
+   ```
+   
+3. Register the parent element to listen to events.
+   
+   ```ts
+   eventAction.addListeners(document.body, ['pointerdown', 'pointerup', 'click'])
+   ```
+
+4. Register your html elements as event action targets
+
+   ```html
+   <button 
+     data-click="action-name:btn-click"
+     data-pointerdown="action-name:btn-pointerdown"
+     data-pointerup="action-name:btn-pointerup"
+   >
+     Click Me
+   </button>
+   <button 
+     data-click="switch-name? action-name:btn-click-switch"
+     data-pointerdown="switch-name:.2? action-name:btn-pointerdown-switch with param .2"
+     data-pointerup="switch-name? action-name:btn-pointerup-switch"
+   >
+     Click Me With Switch
+   </button>
+   ```
+   
+   :::note
+   You can customize how to name event attribute through the [constructor options](#constructoroptions)  `getEventAttributeName`
+   This allows the same target element to have multiple actions for the same event but for different `EventAction` instances
+   :::
+
+5. Now whenever a one of registered event fires on the body, `EventAction` will get the closest element that has the right attribute that belongs to that event name, and starts parsing the action string for the first time then memoizes the result and then calls the respective actions and switches.
+
+6. If things doesn't work as intended, See the [troubleshooting](#troubleshooting) section
+
+</Steps>
+
+This approach offers a clean and efficient way to handle multiple targets with different behaviors, as you can define what should happen for each target and on which event directly on the target itself. This way, you can keep your code concise, maintainable, and easy to understand, without having to repeat the same logic for multiple listeners.
+
+## Definition
+```ts
+export class EventAction<T = GenerateData> {
+  constructor(options?: ConstructorOptions<T>) { }
+}
+```
+
+<GenericT />
+See [ConstructorOptions](#constructoroptions) for all available options
+
+
+## getMatchedTarget <Badge text='static'/>
+
+Finds the first matched element from the `event.composedPath()` that is contained in the `event.currentTarget` and matches the given attribute.
+
+<h3>Definition</h3>
+
+```ts
+function getMatchedTarget(data: {
+  event: Event,
+  attributeName: string,
+}): HTMLElement | undefined
+```
+
+<Parameters parameters={[
+  {
+    name: 'data',
+    type: `{\n\tattributeName: string,\n\tevent: Event\n}`,
+    description: [
+      () => <>
+        <code>data.attributeName</code>
+        <DescriptionList list={[
+          'The name of the attribute to match (without brackets).',
+      ]}/>
+      </>,
+      () => <>
+        <code>data.event</code>
+        <DescriptionList list={[
+          'The Event whose composedPath and currentTarget are used for the search.',
+      ]}/>
+      </>,
+    ]
+  }
+]}/>
+
+<Returns type='HTMLElement | undefined' />
+
+
+## getMatchedTargetPierce <Badge text='static'/>
+
+This function is similar to [getMatchedTarget](#getmatchedtarget), but instead it allows a custom `currTargetSelector` to be specified in the `data` object, which will be passed to <a target='_blank' href={getUtilityUrl('browser', 'closestpierce')}><code>closestPierce</code></a> function under the hood to determine if the target matches the attributeName is contained in the closest element that matches currTargetSelector.
+
+<h3>Definition</h3>
+
+```ts
+function getMatchedTargetPierce(data: {
+  event: Event,
+  attributeName: string,
+  currTargetSelector: string
+}): HTMLElement | undefined
+```
+
+<Returns type='HTMLElement | undefined' />
+
+<Aside title='Why?'>
+The main reason for this method to exist it to be used when working on shadow dom elements, because [getMatchedTarget](#getmatchedtarget) does not work there. so it must be used when working on shadow dom elements,  that's why it needs to know the `currTargetSelector`.
+</Aside>
+
+
+<Aside>
+Both `getMatchedTarget` and `getMatchedTargetPierce` are static methods that rely on `event.composedPath` to find the first element that matches the given `attributeName` and is contained within the `event.currentTarget`.
+
+You can also provide a custom `getMatchedTarget` handler when creating an `EventAction` object, which will be used instead.
+</Aside>
+
+## getEventAttributeName <Badge text='static'/>
+
+This function is used to get the event attribute name for an event.
+
+<h3>Definition</h3>
+
+```ts
+function getEventAttributeName(eventName: string): string
+```
+
+<Parameters parameters={[
+  {
+    name: 'eventName',
+    type: 'string',
+    description: [
+      'The name of the event to get the attribute name for.'
+    ]
+  }
+]}/>
+
+<Returns type='string' details={[
+  () => <>
+    The event name prefixed with <code>data-</code>. For example, if <code>eventName</code> is <code>click</code>, the function will return <code>data-click</code>.
+  </>
+]}/>
+
+:::note
+You can customize how to name event attribute through the [constructor options](#constructoroptions)  `getEventAttributeName`
+:::
+
+## parseActionName <Badge text='static'/>
+
+This method parses the action name string to detect if it has `||`
+
+<h3>Definition</h3>
+
+```ts
+function parseActionName(name: string): {
+  name: string,
+  hasOr: boolean
+}
+```
+
+<Parameters parameters={[
+  {
+    name: 'name',
+    type: 'string',
+    description: [
+      'The action name string to parse.'
+    ]
+  }
+]}/>
+
+<Returns type={`{\n\tname: string,\n\thasOr: boolean\n}`} details={[
+  () => <> <code>name</code> is the action name without the <code>||</code> (if any)</>,
+  () => <> <code>hasOr</code> is a boolean indicating whether the action name starts with <code>||</code></>
+]}/>
+
+
+## parseActionString <Badge text='static'/>
+
+this method parses the action string part like that `switch1:param1? switch2:param2? ||action:param` and returns the [parsed action](#parsedaction) object as shown below.
+
+<Code lang='ts' code={`{\n\tname: 'action',\n\tparam: 'param',\n\thasOr: true,\n\tswitches: [\n\t\t{name: 'switch1', param: 'param1'},\n\t\t{name: 'switch2', param: 'param2'},\n\t]\n}
+`}/>
+
+<h3>Definition</h3>
+
+```ts
+function parseActionString(actionString: string): ParsedAction
+```
+
+<Parameters parameters={[
+  {
+    name: 'actionString',
+    type: 'string',
+    description: [
+      () => <>The action string to parse.</>,
+      () => <>See <a href='#action-string-syntax'>action string syntax</a> and <a href='#roles-of-actions'> roles of actions</a> for more details.</>
+    ]
+  }
+]}/>
+]}
+
+<Returns type='ParsedAction' details={[
+  () => <>See <a href='#parsedaction'>ParsedAction</a> for more details</>
+]}/>
+
+## addListeners
+
+A quick way to add multiple event action listeners to an element.
+
+<h3>Definition</h3>
+```ts
+function addListeners(
+  element: HTMLElement,
+  eventsNames: (string)[]
+): this
+```
+
+<Parameters parameters={[
+  {
+    name: 'element',
+    type: 'HTMLElement',
+    description: [
+      'The element to register the event listeners on.'
+    ],
+  },
+
+  {
+    name: 'eventNames',
+    type: 'string[]',
+    description: [
+      'An array of event names to register listeners for element'
+      ]
+  }
+]}/>
+
+
+## removeListeners
+
+A quick way to remove multiple event action listeners from an element.
+
+<h3>Definition</h3>
+```ts
+function removeListeners(
+  element: HTMLElement,
+  eventsNames: (string)[]
+): this
+```
+
+<Parameters parameters={[
+  {
+    name: 'element',
+    type: 'HTMLElement',
+    description: [
+      'The element to remove event listeners from.'
+    ],
+  },
+
+  {
+    name: 'eventNames',
+    type: 'string[]',
+    description: [
+      'An array of event names to remove their listeners from element'
+      ]
+  }
+]}/>
+
+## registerSwitches
+
+Adds switches to the event action instance
+
+<h3>Definition</h3>
+
+```ts
+function registerSwitches(switches: Record<
+  string,
+  SwitchHandlerOrCustomSwitch
+>): this
+```
+
+<Parameters parameters={[
+  {
+    name: 'switches',
+    type: `Record<string, SwitchHandlerOrCustomSwitch>`,
+    description: [
+      'An object where the keys are switch names and the values are either a switch handler or a custom switch object.',
+
+      () => <>See <a href='#switchhandlerorcustomswitch'>SwitchHandlerOrCustomSwitch</a> for more details.</>
+    ]
+  }
+]}/>
+
+## registerActions
+
+Adds actions to the event action.
+
+<h3>Definition</h3>
+
+```ts
+function registerActions(
+  actions: Record<string, ActionHandlerOrCustomAction<T>>,
+  options?: {
+    generateDataHandler?: (data: GenerateData) => T
+  }
+): this
+```
+
+<Parameters parameters={[
+  {
+    name: 'actions',
+    type: `Record<string, ActionHandlerOrCustomAction<T>>`,
+    description: [
+      () => <>
+        An object where the keys are action names and the values are either an action handler or a custom action object.
+        <br />
+        See <a href='#actionhandlerorcustomaction'>ActionHandlerOrCustomAction</a> for more details.</>
+    ]
+  },
+
+  {
+    name: 'options',
+    type: `{ generateDataHandler?: (data: GenerateData) => T }`,
+    description: [
+      () => <>
+        <code>options.generateDataHandler</code> A default <code>generateDataHandler</code> for all provided actions instead of adding it to each action
+      </>,
+    ]
+  }
+]}/>
+
+
+## parseActionsString
+
+Parses an attribute string and returns a [parsed actions](#parsedaction) array.
+
+<h3>Definition</h3>
+
+```ts
+function parseActionsString(actionString: string): ParsedAction[]
+```
+
+<Parameters parameters={[
+  {
+    name: 'actionString',
+    type: 'string',
+    description: [
+      () => <>
+      The action string to parse.
+      <br/>
+      See <a href='#how-to-write-actions'>HowToWriteActions</a> for more details.
+      </>,
+    ]
+  }
+]}
+/>
+
+<Returns type='ParsedAction[]' details={[
+  () => <>See <a href='#parsedaction'>ParsedAction</a> for more details</>
+]}
+/>
+
+## _getMatchedTarget <Badge text='protected'/>
+
+:::note
+  For internal use only
+:::
+
+Used to get the matched target for an event.
+Decides whether to use the static <a href='#getMatchedTarget'>getMatchedTarget</a> or the static <a href='#getMatchedTargetPierce'>getMatchedTargetPierce</a> function based on the `currTargetSelector` property of the instance or the custom `getMatchedTarget` handler passed to the [constructor options](#constructoroptions).
+
+<h3>Definition</h3>
+
+```ts
+function _getMatchedTarget(data: {
+  attributeName: string,
+  event: Event
+}): HTMLElement | undefined
+```
+
+<Parameters parameters={[
+  {
+    name: 'data',
+    type: `{ attributeName: string, event: Event }`,
+    description: [
+      'An object containing the attributeName and the event.'
+    ]
+  }
+]}/>
+
+
+## executeParsedActions
+
+Executes the actions and switches from the [parsed actions](#parsedaction) array
+
+<h3>Definition</h3>
+
+```ts
+function executeParsedActions(data: {
+  parsedActions: ParsedAction[],
+  matchedTarget: HTMLElement,
+  event: Event,
+  eventName: string
+}): { executedActions: ParsedAction[] }
+```
+
+<Parameters parameters={[
+  {
+    name: 'data',
+    type: `{\n\tparsedActions: ParsedAction[],\n\tmatchedTarget:HTMLElement,\n\tevent: Event,\n\teventName: string\n}`,
+    description: [
+      'An object containing the parsed actions, the matched target, the event and the event name.'
+    ]
+  }
+]}/>
+
+<Returns type={`{\n\texecutedActions: ParsedAction[]\n}`} />
+
+
+## listener
+The event listener handler
+
+<h3>Definition</h3>
+```ts
+function listener(e: Event): undefined | {
+  matchedTarget: HTMLElement,
+  attributeName: string,
+  parsedActions: ParsedAction[],
+  executedActions: ParsedAction[]
+}
+```
+
+<Returns
+  type={`undefined | {\n\tmatchedTarget: HTMLElement,\n\tattributeName: string,\n\tparsedActions: ParsedAction[],\n\texecutedActions: ParsedAction[]\n}`}
+  details={[
+    () => <><code>undefined</code> is returned if there is no <code>matchedTarget</code> or <code>attributeName</code> has no value </>,
+
+    'The returned object can be useful for debugging purposes, and can also be used when the listener is not the actual event listener handler if that is needed.'
+  ]}
+/>
+
+
+## Types
+
+### CustomAction
+
+```ts
+type CustomAction<T> = {
+  handler(data: T): void
+  generateDataHandler?(data: GenerateData): T
+  override?: boolean,
+  overridable?: boolean
+}
+```
+
+<GenericT />
+
+<DescriptionList list={[
+  () => <>
+    <code>handler</code> The Action handler.
+    <br/>
+    It receives a <a href='#generatedata'>GenerateData</a> object as a parameter if <code>generateDataHandler</code> is not provided otherwise it receives the return value of <code>generateDataHandler</code>.
+  </>,
+  
+  () => <>
+    <code>generateDataHandler</code> A function that will be called to generate the data for the action handler.
+    <br/>
+    It receives a <a href='#generatedata'>GenerateData</a> object as a parameter, and it's return value will be passed as the first parameter to the action handler.
+  </>,
+  
+  () => <>
+    <code>override</code> A boolean that is required when overriding existing action and it is overridable.
+  </>,
+  
+  () => <>
+    <code>overridable</code> A boolean that indicates if the action can be overridden.
+  </>,
+]}/>
+
+
+### ActionHandlerOrCustomAction
+
+A custom action or a custom action handler. See [CustomAction](#customaction)
+
+```ts
+type ActionHandlerOrCustomAction<T> = CustomAction<T>['handler'] | CustomAction<T>
+```
+
+<GenericT />
+
+### GenerateData
+
+```ts
+export type GenerateData<CurrTarget = HTMLElement> = {
+  readonly event: Omit<Event, 'currentTarget'> & { currentTarget: CurrTarget },
+  matchedTarget: HTMLElement,
+  eventName: string,
+  actionParam: unknown,
+  readonly _parsedAction: ParsedAction
+}
+```
+
+<DescriptionList list={[
+  () => <><code>event</code> The current event</>,
+  
+  () => <><code>matchedTarget</code> The target of the event returned by <a href='#_getmatchedtarget'><code>_getMatchedTarget</code></a>
+  </>,
+  
+  () => <><code>eventName</code> The name of the event</>,
+  
+  () => <><code>actionParam</code> The parameter passed to the action</>,
+  
+  () => <><code>_parsedAction</code> The <a href='#parsedaction'>parsed action</a> object</>,
+]} />
+
+
+### ParsedAction
+
+```ts
+export type ParsedAction = {
+  name: string,
+  param: unknown,
+  hasOr: boolean,
+  switches: {
+    name: string,
+    param: unknown
+  }[]
+}
+```
+
+<DescriptionList list={[
+  () => <><code>name</code> The name of the action</>,
+  
+  () => <><code>param</code> The parameter passed to the action</>,
+  
+  () => <><code>hasOr</code> A boolean that indicates if the action has or</>,
+  
+  () => <><code>switches</code> An array of parsed switches object with `name` and `param`</>,
+]}/>
+
+
+### RegisteredActionData
+
+```ts
+type RegisteredActionData<T> = {
+  handler: (data: T) => void
+  generateDataHandler: ((data: GenerateData) => T) | undefined
+  overridable: boolean
+}
+```
+<GenericT />
+
+See [CustomAction](#customaction) for properties details.
+
+### SwitchHandlerData
+
+```ts
+type SwitchHandlerData = GenerateData & {
+  switchParam: unknown,
+  actionName: string
+}
+```
+
+<DescriptionList list={[
+  () => <>
+    <code>switchParam</code> The parameter passed to the switch.
+  </>,
+  
+  () => <>
+    <code>actionName</code> The name of the current action that is being executed.
+  </>,
+  
+  () => <>
+    See <a href='#generatedata'>GenerateData</a> for other properties.
+  </>,
+
+]}/>
+
+
+### CustomSwitch
+
+```ts
+export type CustomSwitch = {
+  handler: (data: SwitchHandlerData) => boolean
+  override?: boolean
+  overridable?: boolean,
+  dynamic?: boolean
+}
+```
+
+<DescriptionList list={[
+  () => <>
+    <code>handler</code> The switch handler.
+    <br/>
+    Receives a <a href='#switchhandlerdata'>SwitchHandlerData</a> object as a parameter and return a boolean indicates if the action should be executed
+  </>,
+  
+  () => <>
+    <code>override</code> A boolean that is required when overriding existing switch and it is overridable.
+  </>,
+  
+  () => <>
+    <code>overridable</code> A boolean that indicates if the switch can be overridden.
+  </>,
+  
+  () => <>
+    <code>dynamic</code> A boolean that indicates if the switch is dynamic.
+    <br/>
+    When true, the returned switch handler value will not be cashed through the current event actions
+  </>,
+]}/>
+
+### SwitchHandlerOrCustomSwitch
+
+A custom switch or a custom switch handler. See [CustomSwitch](#customswitch)
+
+```ts
+type SwitchHandlerOrCustomSwitch = CustomSwitch['handler'] | CustomSwitch
+```
+
+### RegisteredSwitchData
+
+```ts
+type RegisteredSwitchData = {
+  handler: (data: SwitchHandlerData) => boolean
+  overridable: boolean,
+  dynamic: boolean
+}
+```
+
+See [CustomSwitch](#customswitch) for properties details.
+
+### ConstructorOptions
+
+```ts
+type ConstructorOptions<T> = {
+  actions?: Record<string, ActionHandlerOrCustomAction<T>>,
+  switches?: Record<string, SwitchHandlerOrCustomSwitch>,
+  generateDataHandler?: (data: GenerateData) => T,
+  currTargetSelector?: string
+  getEventAttributeName?: typeof EventAction.getEventAttributeName
+  getMatchedTarget?: typeof EventAction.getMatchedTarget
+}
+```
+
+<GenericT />
+
+<DescriptionList list={[
+  () => <>
+    <code>actions</code> Add actions at initialization.
+    <br/>
+    See <a href='#registeractions'>registerActions</a> for more details.
+  </>,
+  
+  () => <>
+    <code>switches</code> Add switches at initialization.
+    <br/>
+    See <a href='#registerswitches'>registerSwitches</a> for more details.
+  </>,
+  
+  () => <>
+    <code>generateDataHandler</code> A function that return the custom data which will be passed to actions handlers.
+    <br/>
+    See <code>generateDataHandler</code> on <a href='#customaction'>CustomAction</a> for more details.
+  </>,
+  
+  () => <>
+    <code>currTargetSelector</code> The selector for the current target.
+    <br/>
+    If exists and <code>getMatchedTarget</code> is not provided, <a href='#getmatchedtargetpierce'>getMatchedTargetPierce</a> will be used instead of <a href='#getmatchedtarget'>getMatchedTarget</a> which is required for working on shadow dom elements.
+  </>,
+  
+  () => <>
+    <code>getEventAttributeName</code> A custom function to get the event attribute name.
+    <br/>
+    This allows the same target element to have multiple actions for the same event but for different <code>EventAction</code> instances or just to override the default attribute name.
+    <br/>
+    See <a href='#geteventattributename'>getEventAttributeName</a> for more details.
+  </>,
+  
+  () => <>
+    <code>getMatchedTarget</code> A custom function to get the matched target.
+    <br/>
+    See <a href='#getMatchedTarget'>getMatchedTarget</a> and <a href='#getMatchedTargetPierce'>getMatchedTargetPierce</a> for more details.
+    <Aside><code>currentTargetSelector</code> option is useless when this function is provided</Aside>
+  </>,
+]}/>
+
+## troubleshooting
+If things doesn't work as expected, you can try the following:
+
+- Check the browser console as `EventAction` will warn for any issues like unregistered actions or switches.
+
+- Check that you are adding `EventAction` listener to the correct element or forgot to do so.
+
+- Make sure to add `currentTargetSelector` to the constructor options if you are working on shadow dom elements.
+
+- Make sure the target element has the right attribute name that belongs to that event specially when using `getEventAttributeName` option in the constructor
+
+- Make sure that switches are returning `true` when the action should be executed.
+
+- Try removing all of the actions and switches from the target and use the default action `#debug` to see if it works.
+
+- Try to manually add the listener and log it's returned data to see if it works.
+  ```ts
+  document.body.addEventListener('click', (event) => {
+    console.log('manual listener')
+    console.log(eventAction.listener(event))
+  })
+  ```
+
+- If all of the above fails, please open an issue on GitHub.

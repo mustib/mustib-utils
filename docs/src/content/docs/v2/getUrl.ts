@@ -1,6 +1,6 @@
 type Categories = {
   node: 'envvars' | 'getdirname' | 'typedeventemitter';
-  browser: 'getelementboundaries' | 'getscrollbarwidth' | 'enableelementscroll' | 'disableelementscroll';
+  browser: 'getelementboundaries' | 'getscrollbarwidth' | 'enableelementscroll' | 'disableelementscroll' | 'closestpierce';
   common:
   | 'apperror'
   | 'capitalize'

@@ -1,6 +1,5 @@
 ---
-import { Badge, Code } from '@astrojs/starlight/components';
-import Type from './Type.astro';
+import { Code } from '@astrojs/starlight/components';
 import TypeCode from './TypeCode.astro';
 import DescriptionList from './DescriptionList.astro';
 import Since from './Since.astro';
@@ -11,7 +10,7 @@ type Props = {
     type: string;
     since?: string;
     defaultValue?: string;
-    description?: (string | ((...args: any[]) => any))[];
+    description?:Parameters<typeof DescriptionList>['0']['list'];
   }[];
 };
 
@@ -35,9 +34,7 @@ const { parameters } = Astro.props;
         {defaultValue !== undefined && (
           <Code lang="ts" code=`/* default value */\nconst ${name} = ${defaultValue};` />
         )}
-         {description && 
-         <DescriptionList list={description}/>
-         }
+        {description && <DescriptionList list={description}/>}
       </li>
     ))
   }
