@@ -17,7 +17,7 @@ type Options = {
 };
 
 const capitalizeFirst = (str: string) =>
-  str[0].toUpperCase().concat(str.slice(1).toLowerCase());
+  str[0]!.toUpperCase().concat(str.slice(1).toLowerCase());
 
 /**
  * Capitalizes the first letter of a string or each word in a string.

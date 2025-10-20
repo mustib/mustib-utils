@@ -109,7 +109,7 @@ export function stringFromMilliseconds(
       case 'ceil': {
         const valueWithRoundedDecimal = Math[decimalBehavior](partsData[minUnit].value + rawDecimal)
         const unitData = timeUnits[minUnit]
-        const nextUnit = timeUnits[timeUnitsNamesAsc[unitData.index + 1]]
+        const nextUnit = timeUnits[timeUnitsNamesAsc[unitData.index + 1]!]
         const isOverflow = valueWithRoundedDecimal * unitData.value >= nextUnit.value
         const isLastUnit = minUnitIndex === maxUnitIndex
 

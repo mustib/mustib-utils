@@ -34,4 +34,4 @@ export const timeUnitsNamesAsc = [
 
 export const minUnit = timeUnits[timeUnitsNamesAsc[0]]
 
-export const maxUnit = timeUnits[timeUnitsNamesAsc[timeUnitsNamesAsc.length - 1]]
+export const maxUnit = timeUnits[timeUnitsNamesAsc[timeUnitsNamesAsc.length - 1]!]

@@ -11,7 +11,13 @@
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedIndexedAccess": true,
+    "paths": {
+      "@browser/*": ["./src/browser/*"],
+      "@common/*": ["./src/common/*"],
+      "@node/*": ["./src/node/*"]
+    }
   },
   "include": ["./src"]
 }

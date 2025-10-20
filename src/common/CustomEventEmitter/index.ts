@@ -166,7 +166,7 @@ export class CustomEventEmitter<
         prepare,
         prepend,
         runningBehavior = 'sync',
-      } = events[name];
+      } = events[name]!;
 
       let hasError = false;
 
@@ -233,7 +233,7 @@ export class CustomEventEmitter<
     if (!this.hasEvent(name))
       this.throwInvalidEventNameAction(name, 'destruct');
 
-    const event = this.events[name];
+    const event = this.events[name]!;
 
     if (event.destructed) return this;
 
@@ -288,7 +288,7 @@ export class CustomEventEmitter<
         priority === 'normal' ? 'add' : 'prepend',
       );
 
-    const event = this.events[name];
+    const event = this.events[name]!;
 
     if (event.destructed) return;
 
@@ -345,6 +345,10 @@ export class CustomEventEmitter<
 
   private *getListenersGenerator(name: string | number | symbol) {
     const event = this.events[name];
+    if (!event) {
+      this.throwInvalidEventNameAction(name.toString(), 'get', ', because it does not exist');
+      return
+    }
     for (const priority of EVENT_TYPES_PRIORITIES) {
       for (const listener of event.listeners[priority]) {
         const listenerData = event.listeners.all.get(listener);
@@ -362,7 +366,7 @@ export class CustomEventEmitter<
     if (!this.hasEvent(name))
       this.throwInvalidEventNameAction(name, 'dispatch');
 
-    const event = this.events[name];
+    const event = this.events[name]!;
 
     if (event.destructed) return this;
 
@@ -478,7 +482,7 @@ export class CustomEventEmitter<
         ', because it does not exist',
       );
 
-    const allListeners = this.events[name].listeners.all;
+    const allListeners = this.events[name]!.listeners.all;
 
     if (this.debugListeners) {
       const listenerData = allListeners.get(listener);
@@ -496,7 +500,7 @@ export class CustomEventEmitter<
 
   protected throwInvalidEventNameAction(
     name: keyof EventMaps,
-    action: 'add' | 'prepend' | 'remove' | 'dispatch' | 'destruct',
+    action: 'add' | 'prepend' | 'remove' | 'dispatch' | 'destruct' | 'get',
     reason = '',
   ) {
     AppError.throw<EventErrorTypes>(

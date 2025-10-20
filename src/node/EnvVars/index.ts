@@ -60,7 +60,7 @@ function parseEnvFile(path: string) {
       return vars;
     }
 
-    const [key, value] = line.split('=').map((val) => val.trim());
+    const [key = '', value] = line.split('=').map((val) => val.trim());
 
     if (key === '')
       AppError.throw(
@@ -267,7 +267,7 @@ function getVarFromSources({
   }
 
   const assignedSource =
-    combinedEnvVarsSources[indexOfVarNameInCombinedEnvVars];
+    combinedEnvVarsSources[indexOfVarNameInCombinedEnvVars]!;
   const varNameInSources = varNameInCombinedEnvVars!;
   const varValue = assignedSource[varNameInSources];
 
@@ -291,7 +291,7 @@ function parseVarValueFromString({
   varName: string;
   assignedSource: Record<string, string>;
 }) {
-  const varValue = assignedSource[varNameInAllEnvVarsFromSources];
+  const varValue = assignedSource[varNameInAllEnvVarsFromSources]!;
 
   switch (parseAsStringValue) {
     case 'string':
@@ -344,7 +344,7 @@ function getParseAsHandler({
   });
 
   if (typeof varValue !== 'string')
-    AppError.throw(
+    return AppError.throw(
       'Invalid',
       `expected the value for (${varName}) which has the name (${varNameInSources}) in the sources for the current env which is (${currentEnv}) to be a string, but received type (${getTypeof(varValue)}).`,
       { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
