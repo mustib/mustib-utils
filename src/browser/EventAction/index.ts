@@ -70,7 +70,7 @@ export type ParsedAction = {
   param: unknown,
 
   /**
-   * A boolean that indicates if the action is an "or" action
+   * A boolean that indicates if the action is an "or" action **(name starts with `||`)**
    */
   hasOr: boolean,
 
@@ -78,8 +78,20 @@ export type ParsedAction = {
    * An array of parsed switches object with `name` and `param`
    */
   switches: {
+    /**
+     * The name of the switch
+     */
     name: string,
-    param: unknown
+
+    /**
+     * The parameter passed to the switch
+     */
+    param: unknown,
+
+    /**
+     * A boolean indicated if switch is negated **(name starts with `!`)**
+     */
+    isNegated: boolean
   }[]
 }
 
@@ -338,7 +350,7 @@ export class EventAction<T = GenerateData> {
   /**
    * Parse an action name and returns an object with the following properties:
    * - name: The name of the action.
-   * - hasOr: A boolean indicating whether the action name starts with "||".
+   * - hasOr: A boolean indicating whether the action name starts with `||`.
    * 
    * @param name - The name of the action to parse.
    */
@@ -346,6 +358,23 @@ export class EventAction<T = GenerateData> {
     const trimmedName = name.trim()
     const hasOr = trimmedName.startsWith('||')
     return { name: hasOr ? trimmedName.slice(2) : trimmedName, hasOr }
+  }
+
+
+  /**
+   * Parse a switch name and returns an object with the following properties:
+   * - name: The name of the switch.
+   * - isNegated: A boolean indicating whether the switch name starts with `!`.
+   * 
+   * @param name - The name of the switch to parse.
+   */
+  static parseSwitchName(name: string): { name: string, isNegated: boolean } {
+    const trimmedName = name.trim()
+    const isNegated = trimmedName.startsWith('!')
+    return {
+      name: isNegated ? trimmedName.slice(1) : trimmedName,
+      isNegated
+    }
   }
 
 
@@ -385,7 +414,7 @@ export class EventAction<T = GenerateData> {
         const hasSwitchParam = switchParamIndex !== -1;
         const switchName = hasSwitchParam ? switchString.slice(0, switchParamIndex) : switchString;
         const switchParam = hasSwitchParam ? switchString.slice(switchParamIndex + 1) : '';
-        return { name: switchName.trim(), param: switchParam.trim() };
+        return { param: switchParam.trim(), ...this.parseSwitchName(switchName) };
       });
     }
 
@@ -495,7 +524,18 @@ export class EventAction<T = GenerateData> {
         continue
       }
 
-      this.switches[name] = switchData
+      const parsedSwitchName = EventAction.parseSwitchName(name)
+
+      if (parsedSwitchName.isNegated) {
+        console.warn(`Switch name must not start with (!) as it is used to negate switches, add your logic once with the name (${parsedSwitchName.name}) and negate the switch name in the attribute instead, Please note that your switch handler will be wrapped in a negated one, and the name will be converted to (${parsedSwitchName.name}) if you omit this warning`)
+        const originalHandler = switchData.handler;
+        switchData.handler = (...args) => {
+          return !originalHandler(...args)
+        }
+
+      }
+
+      this.switches[parsedSwitchName.name] = switchData
     }
 
     return this
@@ -540,7 +580,13 @@ export class EventAction<T = GenerateData> {
         continue
       }
 
-      this.actions[name] = actionData
+      const parsedActionName = EventAction.parseActionName(name)
+
+      if (parsedActionName.hasOr) {
+        console.warn(`Action name cannot start with (||), as it is used to detect if the action hasOr, which is used as an indicator to not run other actions if this one gets executed, Please not that the action name will be converted to (${parsedActionName.name}) if you omit this warning`)
+      }
+
+      this.actions[parsedActionName.name] = actionData
     }
 
     return this
@@ -579,8 +625,8 @@ export class EventAction<T = GenerateData> {
                 switches: actionData.slice(2).map(switchData => {
                   const [name = '', param = ''] = Array.isArray(switchData) ? switchData : switchData.split(':')
                   return {
-                    name,
-                    param
+                    param,
+                    ...EventAction.parseSwitchName(name)
                   }
                 }),
                 ...EventAction.parseActionName(actionData[0])
@@ -596,7 +642,7 @@ export class EventAction<T = GenerateData> {
 
     return attributeString
       .split('&&')
-      .map(EventAction.parseActionString);
+      .map(EventAction.parseActionString.bind(EventAction));
   }
 
 
@@ -660,7 +706,7 @@ export class EventAction<T = GenerateData> {
 
       const checkSwitches = parsedAction.switches.length === 0 ? true : parsedAction.switches.every(switchData => {
         const staticValue = staticSwitches[switchData.name]?.get(switchData.param)
-        if (staticValue !== undefined) return staticValue
+        if (staticValue !== undefined) return switchData.isNegated ? !staticValue : staticValue
 
         const switchAction = this.switches[switchData.name]
         if (!switchAction) {
@@ -683,7 +729,7 @@ export class EventAction<T = GenerateData> {
           map.set(switchData.param, value)
         }
 
-        return value
+        return switchData.isNegated ? !value : value
       })
 
       if (!checkSwitches) continue
