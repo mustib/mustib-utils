@@ -279,6 +279,26 @@ export class EventAction<T = GenerateData> {
       },
       overridable: false,
       dynamic: false
+    },
+
+    '#modifier': {
+      handler(data) {
+        let modifiers: string[] | undefined;
+
+        const { event, actionParam } = data;
+
+        if (typeof actionParam === 'string') modifiers = actionParam.split(',')
+        else if (Array.isArray(actionParam)) modifiers = actionParam
+
+        if (!modifiers || modifiers.length === 0 || !(event instanceof PointerEvent || event instanceof KeyboardEvent)) {
+          return false
+        }
+
+        return modifiers.some(modifier => event.getModifierState(modifier))
+
+      },
+      overridable: true,
+      dynamic: true
     }
   }
 

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 ### Added
 
 - `EventAction` switch negation
+- `EventAction` #modifier switch
 
 ## [2.7.0]
 
