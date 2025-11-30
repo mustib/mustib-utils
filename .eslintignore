@@ -3,3 +3,4 @@ dist
 *.js
 docs
 *.d.ts
+vitest.config.ts
