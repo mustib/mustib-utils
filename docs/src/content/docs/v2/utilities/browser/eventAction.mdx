@@ -5,7 +5,7 @@ sidebar:
   badge: new
 ---
 
-import { TypeSince, Type, Parameters, DescriptionList, Returns } from '../../components'
+import { TypeSince, Type, Parameters, DescriptionList, Returns, Since } from '../../components'
 import { Code, Badge, Aside, Steps } from '@astrojs/starlight/components'
 
 import { getUtilityUrl } from '../../getUrl'
@@ -63,7 +63,7 @@ where `#log` and `#prevent` are actions, `btn clicked` is an action param, and `
 ## Usage
 ```html
 <script type="module">
-  import { EventAction } from '@mustib/utils';
+  import { EventAction } from '@mustib/utils/browser';
   
   new EventAction({
     actions: {
@@ -97,6 +97,8 @@ where `#log` and `#prevent` are actions, `btn clicked` is an action param, and `
 - Each action should be responsible for only one thing, and you can use action params to pass data to the action.
 - If `||` precedes the action name (has or) it means to stop executing the rest of the actions for the current event if that action gets executed
 - When using `||` there must be no spaces between it and the action name
+- If `!` precedes the switch name (negated) it means to negate the switch value
+- When using `!` there must be no spaces between it and the switch name
 
 ## How to write actions
 
@@ -163,7 +165,7 @@ Don't forget `||` followed by action name is used to stop executing the rest of 
 
 ## Performance
 - `EventAction` is designed to be performant, you only add one listener on the parent.
-- `EventAction` Will memoize parsed action strings and action arrays after the first time it is parsed, so it doesn't have to do that every time.
+- `EventAction` will memoize parsed action strings and action arrays after the first time it is parsed, so it doesn't have to do that every time.
 - `EventAction` will memoize the switch result through the current event cycle, if it is not dynamic and the switch param does not changed, so even if you are using the same switch multiple times for the same action or different actions, it will only execute the switch once.
 
 ## Default Actions
@@ -187,6 +189,10 @@ Don't forget that actions names starting with `#` are reserved for internal acti
 
 - `#special-key` runs for `KeyboardEvents` and expects a param of special keys to check if any of them are pressed.
   - special keys are `ctrl` `alt` `shift` `meta`
+
+- `#modifier` <Since since='2.8.0' /> <br /> 
+  a wrapper for [getModifierState()](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/getModifierState) which runs for `KeyboardEvents` and `PointerEvents` and expects a param of the keys to check if any of them is the modifier.
+  - `param` can be a comma separated list of modifiers or an array of modifiers (for [action array syntax](#action-array-syntax)).
 
 :::note
 The static property `EventAction.defaultSwitches` contains the default switches which are globally available.<br/>
