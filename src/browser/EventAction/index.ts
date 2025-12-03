@@ -285,10 +285,10 @@ export class EventAction<T = GenerateData> {
       handler(data) {
         let modifiers: string[] | undefined;
 
-        const { event, actionParam } = data;
+        const { event, switchParam } = data;
 
-        if (typeof actionParam === 'string') modifiers = actionParam.split(',')
-        else if (Array.isArray(actionParam)) modifiers = actionParam
+        if (typeof switchParam === 'string') modifiers = switchParam.split(',')
+        else if (Array.isArray(switchParam)) modifiers = switchParam
 
         if (!modifiers || modifiers.length === 0 || !(event instanceof PointerEvent || event instanceof KeyboardEvent)) {
           return false
