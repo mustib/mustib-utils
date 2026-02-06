@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 ## [2.8.1]
 
+### Added
+
+- `getFileFingerprint` in node utils
+
+## [2.8.1]
+
 ### Fixed
 
 - `EventAction` #modifier switch param

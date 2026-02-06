@@ -4,7 +4,16 @@ import dts from 'rollup-plugin-dts';
 
 const esOutDir = 'dist';
 const cjsOutDir = 'dist/cjs';
-const externals = ['dotenv', 'fs', 'node:events', 'path', 'url'];
+const externals = [
+  'dotenv',
+  'fs',
+  'node:events',
+  'path',
+  'url',
+  'node:fs',
+  'node:crypto',
+  'node:fs/promises',
+];
 
 /**
  * @return {import('rollup').RollupOptions[]}
