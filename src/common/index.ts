@@ -1,6 +1,7 @@
 export * from './AppError';
 export * from './capitalize';
 export * from './CustomEventEmitter';
+export * from './DeferredValue';
 export * from './debounce';
 export * from './getTypeof';
 export * from './mergeTwoObjects';

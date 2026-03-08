@@ -4,7 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
-## [2.8.1]
+## [2.9.0]
+
+### Added
+
+- `DeferredValue` in common utils
+
+### Fixed
+
+- `vitest.config.ts` to handle path aliases correctly
+
+## [2.8.2]
 
 ### Added
 

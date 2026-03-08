@@ -16,7 +16,8 @@
     "paths": {
       "@browser/*": ["./src/browser/*"],
       "@common/*": ["./src/common/*"],
-      "@node/*": ["./src/node/*"]
+      "@node/*": ["./src/node/*"],
+      "@constants": ["./src/constants"]
     }
   },
   "include": ["./src"]

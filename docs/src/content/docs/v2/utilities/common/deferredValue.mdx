@@ -1,0 +1,179 @@
+---
+title: DeferredValue
+description: A utility class that represents a value that will be available at some point in the future.
+sidebar:
+  badge: new
+---
+
+import { TypeSince, Type, Parameters, DescriptionList, Returns, Since, ErrorScope } from '../../components'
+import { Code, Badge, Aside, Steps } from '@astrojs/starlight/components'
+
+import { getUtilityUrl } from '../../getUrl'
+
+<TypeSince type='class' since='2.9.0' />
+
+A utility class that represents a value that will be available at some point in the future.
+It encapsulates a `Promise` and provides methods to `resolve`, `reject`, and `reset` the `Promise`.
+
+This is particularly useful when you need to pass a `Promise` to a consumer but want to control its resolution or rejection from a different part of your code.
+
+<ErrorScope errorScope='deferredValueErrorScope'/>
+
+## Usage
+
+### Basic Usage
+```ts
+import { DeferredValue } from '@mustib/utils/common';
+
+const deferred = new DeferredValue<string>();
+
+// Somewhere in your code, you can resolve the deferred value
+deferred.resolve('Hello, World!');
+
+// In another part of your code, you can await the promise
+async function consume() {
+  const value = await deferred.current;
+  console.log(value); // logs 'Hello, World!'
+}
+
+consume();
+```
+
+### Rejection
+```ts
+import { DeferredValue, AppError } from '@mustib/utils/common';
+
+const deferred = new DeferredValue<string>();
+
+// Rejeect the promise
+deferred.reject(new Error('Something went wrong'));
+
+// Handle the rejection
+async function consume() {
+  try {
+    await deferred.current;
+  } catch (error) {
+    console.error(error.message); // logs 'Something went wrong'
+  }
+}
+
+consume();
+```
+
+## Definition
+```ts
+export class DeferredValue<T> {
+  constructor() { }
+}
+```
+`T` is the generic type passed to the `DeferredValue<T>` on instantiation.
+
+## Properties
+
+### current <Badge text='readonly' />
+The `Promise` that this `DeferredValue` encapsulates.
+
+<Type type='Promise<T>' />
+
+### resolvedValue <Badge text='readonly' />
+Gets the resolved value of the `DeferredValue`.
+
+<Type type='T' />
+
+<Aside type='danger'>
+Throws an `AppError` if the `DeferredValue` is not yet resolved.
+</Aside>
+
+### isPending <Badge text='readonly' />
+Gets whether the `DeferredValue` is pending.
+
+<Type type='boolean' />
+
+### isResolved <Badge text='readonly' />
+Gets whether the `DeferredValue` is resolved.
+
+<Type type='boolean' />
+
+### isRejected <Badge text='readonly' />
+Gets whether the `DeferredValue` is rejected.
+
+<Type type='boolean' />
+
+### isFulfilled <Badge text='readonly' />
+Gets whether the `DeferredValue` is fulfilled (resolved or rejected).
+
+<Type type='boolean' />
+
+
+## Methods
+
+### resolve
+Resolves the `DeferredValue` with the given value.
+
+<h4>Definition</h4>
+```ts
+function resolve(v: T): void { }
+```
+
+<Parameters parameters={[
+  {
+    name: 'v',
+    type: 'T',
+    description: [
+      'The value to resolve the DeferredValue with.',
+    ]
+  }
+]}/>
+
+<Aside type='danger'>
+Throws an `AppError` if the `DeferredValue` is already fulfilled.
+</Aside>
+
+### reject
+Rejects the `DeferredValue` with the given reason.
+
+<h4>Definition</h4>
+```ts
+function reject(reason: Error): void { }
+```
+
+<Parameters parameters={[
+  {
+    name: 'reason',
+    type: 'Error',
+    description: [
+      'The reason to reject the DeferredValue with.',
+    ]
+  }
+]}/>
+
+<Aside type='danger'>
+Throws an `AppError` if the `DeferredValue` is already fulfilled.
+</Aside>
+
+### reset
+Resets the `DeferredValue` to its initial state.
+
+<h4>Definition</h4>
+```ts
+function reset(): void { }
+```
+
+<Aside type='danger'>
+Throws an `AppError` if the `DeferredValue` is already pending. call `abort()` instead.
+</Aside>
+
+
+### abort
+Aborts the `DeferredValue`, rejecting it with an `AppError` if it is still pending.
+
+<h4>Definition</h4>
+```ts
+function abort(): void { }
+```
+
+## Types
+
+### ErrorTypes
+The possible error types for `AppError` thrown by `DeferredValue`.
+<Type type={`'Invalid' | 'Abort'`} />
