@@ -1,10 +1,142 @@
 ---
 title: getFileFingerprint
-description: Get a file's fingerprint based on identity properties
-sidebar:
-  badge: new
+description: Generate a stable file fingerprint using file content and identity data.
 ---
 
-import UnderConstruction from '../../components/UnderConstruction.astro'
+import {
+  TypeSince,
+  Parameters,
+  DescriptionList,
+  Default,
+  Returns,
+} from '../../components'
 
-<UnderConstruction />
+<TypeSince type='function' since='2.8.2'/>
+
+The **`getFileFingerprint`** function generates a fingerprint for a file by hashing:
+
+1. A sample from the beginning of the file.
+2. Identity data (default file metadata or custom identity data).
+
+It is useful for fast file change detection and deduplication workflows where reading the full file every time is unnecessary.
+
+## Usage
+```ts
+import { getFileFingerprint } from '@mustib/utils/node';
+
+const result = await getFileFingerprint({
+  filePath: '/absolute/path/to/file.txt',
+});
+
+if (result.status === 'success') {
+  console.log(result.data.fingerprint);
+} else {
+  console.error(result.data.message, result.data.context);
+}
+```
+
+## Usage with custom identity data
+```ts
+import { getFileFingerprint } from '@mustib/utils/node';
+
+const result = await getFileFingerprint({
+  filePath: '/absolute/path/to/file.txt',
+  hashAlgorithm: 'sha256',
+  sampleSize: 1024,
+  identityData: ({ stats }) => ({
+    size: stats.size,
+    createdAt: stats.birthtimeMs,
+  }),
+});
+```
+
+## Definition
+```ts
+function getFileFingerprint(options: {
+  filePath: string;
+  hashAlgorithm?: string;
+  sampleSize?: number;
+  identityData?: object | ((data: { stats: Stats }) => object);
+}): Promise<{
+  status: 'success';
+  data: {
+    fingerprint: string;
+  };
+} | {
+  status: 'error';
+  data: {
+    message: string;
+    context: unknown;
+  };
+}> { }
+```
+
+<Parameters parameters={[
+  {
+    name: 'options',
+    type: "{\n\tfilePath: string,\n\thashAlgorithm?: string,\n\tsampleSize?: number,\n\tidentityData?: object | ((data: { stats: Stats }) => object),\n}",
+    description: [
+      () => <>
+        <code>options.filePath</code>
+        <DescriptionList list={[
+          'Absolute path to the target file.',
+          'This field is required.',
+        ]} />
+      </>,
+
+      () => <>
+        <code>options.hashAlgorithm</code>
+        <DescriptionList list={[
+          'Hash algorithm used by Node.js crypto (for example: `md5`, `sha256`).',
+          () => <Default value="'md5'"/>,
+          'If an invalid algorithm is provided, the function rejects.',
+        ]} />
+      </>,
+
+      () => <>
+        <code>options.sampleSize</code>
+        <DescriptionList list={[
+          'Number used as stream end index for the content sample.',
+          () => <Default value='65535'/>,
+          'Because Node read streams use an inclusive `end`, the sampled bytes are effectively up to `sampleSize + 1` when the file is large enough.',
+        ]} />
+      </>,
+
+      () => <>
+        <code>options.identityData</code>
+        <DescriptionList list={[
+          'Optional identity data appended to the hash input.',
+          'Can be a static object or a callback receiving `{ stats }`.',
+          'When omitted, it uses `{ size: stats.size, mtime: stats.mtimeMs }`.',
+        ]} />
+      </>,
+    ]
+  }
+]} />
+
+<Returns type="Promise<FileFingerprintSuccessResult | FileFingerprintErrorResult>" details={[
+  () => <>
+    Success result:
+    <DescriptionList list={[
+      () => <><code>status: 'success'</code></>,
+      () => <><code>data.fingerprint</code>: hexadecimal hash string.</>,
+    ]} />
+  </>,
+
+  () => <>
+    Error result:
+    <DescriptionList list={[
+      () => <><code>status: 'error'</code></>,
+      () => <><code>data.message</code>: descriptive error message.</>,
+      () => <><code>data.context</code>: additional context such as <code>filePath</code> and underlying error object.</>,
+    ]} />
+  </>,
+
+  'If file stat fails (for example, path does not exist), the function rejects with the underlying Node error.',
+]}/>
+
+## Error behavior
+- Returns `{ status: 'error' }` with message `"not a file"` when the path exists but is not a file (for example, a directory).
+- Returns `{ status: 'error' }` with message `"failed to read file sample"` when stream reading fails.
+- Rejects if `stat(filePath)` fails.
+- Rejects if `hashAlgorithm` is invalid.
