@@ -1,38 +1,47 @@
 ---
 title: parseJson
-description: A function that parses a string as JSON and returns the parsed value
+description: Parse a JSON string safely and return undefined on failure.
 ---
 
-import { Badge } from '@astrojs/starlight/components';
+import {
+  Type,
+  Parameters,
+  Returns,
+} from '../../components'
 
-<Badge text="Type" />: `function`
+<Type type='function' />
 
-This function simplifies parsing a string as JSON. It wraps the native `JSON.parse` function in a try-catch block to handle errors automatically. If the string cannot be parsed as JSON, it returns `undefined`; otherwise, it returns the parsed value.
+The **`parseJson`** function wraps `JSON.parse` and returns `undefined` when parsing fails.
 
 ## Usage
 ```ts
-type User = {
-  name: string;
-  email: string;
-}
+import { parseJson } from '@mustib/utils';
 
-const user = parseJson<User>(userDataString);
+type User = { name: string; email: string };
 
-if (user) {
-  console.log(user) // { name: 'user name', email: 'user email' }
-} else {
-  console.log(user) // undefined
-}
+const user = parseJson<User>('{"name":"A","email":"a@mail.com"}');
+const invalid = parseJson<User>('not-json');
 
+console.log(user?.name); // A
+console.log(invalid); // undefined
 ```
 
 ## Definition
 ```ts
-export function parseJson<T>(value: string): T | undefined {};
+function parseJson<T>(value: string): T | undefined { }
 ```
 
-- `parameters:`
-  1. `value:` string
-      - The string to parse as JSON
+<Parameters parameters={[
+  {
+    name: 'value',
+    type: 'string',
+    description: [
+      'JSON string to parse.',
+    ]
+  }
+]} />
 
-- `returns:` The parsed value, or `undefined` if the string cannot be parsed as JSON
+<Returns type='T | undefined' details={[
+  'Parsed value when valid JSON is provided.',
+  '`undefined` when parsing fails.',
+]}/>

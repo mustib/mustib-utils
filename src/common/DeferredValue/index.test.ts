@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { DeferredValue } from '.';
 import { AppError } from '@common/AppError';
 import { wait } from '@common/time/wait';
+import { DeferredValue } from '.';
 
 describe('DeferredValue', () => {
   it('should be in pending state initially', () => {
@@ -109,7 +109,7 @@ describe('DeferredValue', () => {
 
     const deferred2 = new DeferredValue<string>();
     deferred2.reject(new Error('test'));
-    deferred2.current.catch(() => {}); // handle rejection
+    deferred2.current.catch(() => { }); // handle rejection
     expect(deferred2.isFulfilled).toBe(true);
   });
 

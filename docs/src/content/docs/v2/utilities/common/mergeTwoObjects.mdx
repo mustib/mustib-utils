@@ -1,13 +1,19 @@
 ---
 title: mergeTwoObjects
-description: Merges two objects
+description: Deeply merge two values when both are plain objects.
 ---
 
-import { Aside, Badge, Code } from '@astrojs/starlight/components';
+import {
+  Type,
+  Parameters,
+  Returns,
+} from '../../components'
 
-<Badge text="Type" />: `function`
+<Type type='function' />
 
-This function merges two objects at a deep level by cloning properties from the source object to the target object.
+The **`mergeTwoObjects`** function recursively merges source properties into target when both sides are objects.
+
+If either input is not an object, it returns `source`.
 
 ## Usage
 ```ts
@@ -15,22 +21,46 @@ import { mergeTwoObjects } from '@mustib/utils';
 
 const target = { a: 1, b: { c: 2 } };
 const source = { b: { d: 3 }, e: 4 };
+
 const result = mergeTwoObjects(target, source);
-console.log(result); // { a: 1, b: { c: 2, d: 3 }, e: 4 }
+// { a: 1, b: { c: 2, d: 3 }, e: 4 }
 ```
 
 ## Definition
 ```ts
-export function mergeTwoObjects<Target, Source>(
+function mergeTwoObjects<Target, Source>(
   target: Target,
   source: Source,
   shouldMutateTarget = false,
-): MergeObjects<Target, Source> {}
+): MergeObjects<Target, Source> { }
 ```
 
-- `parameters:`
-    1. `target` - the target object to merge to
-    2. `source` - the source object to merge from
-    3. `shouldMutateTarget` - a boolean indicating whether to create a new object or mutate the target object (defaults to false)
+<Parameters parameters={[
+  {
+    name: 'target',
+    type: 'unknown',
+    description: [
+      'Target value to merge into.',
+    ]
+  },
+  {
+    name: 'source',
+    type: 'unknown',
+    description: [
+      'Source value to merge from.',
+    ]
+  },
+  {
+    name: 'shouldMutateTarget',
+    type: 'boolean',
+    defaultValue: 'false',
+    description: [
+      'When false, merges into a structured clone of target. When true, mutates target directly.',
+    ]
+  }
+]} />
 
-- `returns:` - the merged object or the source object if either the target or source is not an object
+<Returns type='MergeObjects<Target, Source>' details={[
+  'Merged object when both inputs are objects.',
+  'Otherwise returns `source`.',
+]}/>

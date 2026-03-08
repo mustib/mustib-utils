@@ -4,8 +4,9 @@ description: A class to manage and handle errors in an application
 ---
 
 import { Aside, Badge } from '@astrojs/starlight/components';
+import { TypeSince, Parameters, Returns, DescriptionList } from '../../components'
 
-<Badge text="Type" />: `class`
+<TypeSince type='class' since='0.0.0' />
 
 The **`AppError`** class is designed to manage and handle errors of a specific type in a structured way within an application. It provides mechanisms to collect, report multiple errors, while also supporting error scopes for more granular error management. The class includes methods to push new errors, aggregate errors, and convert them to a string representation. It also provides functionality to catch and throw errors, with custom options for error handling behavior.
 
@@ -97,8 +98,16 @@ export class AppError<ErrorTypes extends Capitalize<string>> extends Error {}
 ```ts
 type AppError = new (options?: ErrorOptions): AppError
 ```
-- parameters: 
-  1. `options?:` [ErrorOptions](#erroroptions)
+
+<Parameters parameters={[
+  {
+    name: 'options',
+    type: 'ErrorOptions',
+    description: [
+      () => <>See <a href='#erroroptions'>ErrorOptions</a>.</>,
+    ]
+  }
+]}/>
 
 
 ## Properties
@@ -145,11 +154,29 @@ type throw = <ErrorTypes extends Capitalize<string>>(
 
 This method is used to create a new `AppError` instance, push the error to it, and throw it instead of having to it that manually.
 
-- `parameters:`
-      1. `type:` [ErrorTypes](#errortypes)
-      2. `error:` string | string[]
-          - see [push](#push) error parameter for more details
-      3. `options?:` [ErrorOptions](#erroroptions) & \{ pushOptions?: [PushOptions](#pushoptions) \}
+<Parameters parameters={[
+  {
+    name: 'type',
+    type: 'ErrorTypes',
+    description: [
+      () => <>See <a href='#errortypes'>ErrorTypes</a>.</>,
+    ]
+  },
+  {
+    name: 'error',
+    type: 'string | string[]',
+    description: [
+      () => <>See <a href='#push'>push</a> `error` parameter for more details.</>,
+    ]
+  },
+  {
+    name: 'options',
+    type: 'ErrorOptions & { pushOptions?: PushOptions }',
+    description: [
+      () => <>See <a href='#erroroptions'>ErrorOptions</a> and <a href='#pushoptions'>PushOptions</a>.</>,
+    ]
+  }
+]}/>
 
 #### Usage:
 ```ts
@@ -169,13 +196,25 @@ type aggregate = async <ErrorTypes extends Capitalize<string>>(
 
 This method is used if you don't want to create a new `AppError` instance and end it manually by calling the `end()` method at the end of your implementations as it does it for you.
 
-- `parameters:`
-    1. `aggregateFunc:` (appError: Omit\<AppError\<ErrorTypes\>, 'end'\>) =\> void | Promise\<void\>
-        - a function that will be called with a new `AppError` instance as a parameter.
-        - it can be async or normal function.
-    2. `options?:` [ErrorOptions](#erroroptions)
+<Parameters parameters={[
+  {
+    name: 'aggregateFunc',
+    type: '(appError: Omit<AppError<ErrorTypes>, \"end\">) => void | Promise<void>',
+    description: [
+      'A function that will be called with a new AppError instance as a parameter.',
+      'It can be async or normal function.',
+    ]
+  },
+  {
+    name: 'options',
+    type: 'ErrorOptions',
+    description: [
+      () => <>See <a href='#erroroptions'>ErrorOptions</a>.</>,
+    ]
+  }
+]}/>
 
-- `returns:` Promise\<void\>
+<Returns type='Promise<void>' />
 
 #### Usage:
 ```ts
@@ -194,12 +233,18 @@ type catch = async (catchFunc: () => void | Promise<void>): Promise<void>
 ```
 This method is used to catch errors thrown from other `AppError` instances and add them to the current `AppError` instance.
 
-- `parameters:`
-    1. `catchFunc:` () =\> void | Promise\<void\>
-        - it will be called inside a try catch block to catch errors thrown from other `AppError` instances.
-        - it can be async or normal function.
+<Parameters parameters={[
+  {
+    name: 'catchFunc',
+    type: '() => void | Promise<void>',
+    description: [
+      'Called inside a try/catch block to catch errors thrown from other AppError instances.',
+      'It can be async or normal function.',
+    ]
+  }
+]}/>
 
-- `returns:` Promise\<void\>
+<Returns type='Promise<void>' />
 
 #### Usage:
 ```ts
@@ -222,14 +267,36 @@ type push = (type: ErrorTypes, error: string | string[], options?: PushOptions):
 ```
 This method is used to add new errors to the `AppError` instance's [errors](#errors) property.
 
-- `parameters:`
-  1. `type:` [ErrorTypes](#errortypes)
-  2. `error:` string | string[]
-      - `string` - the error message to be added
-      - `string[]` - an array of error messages to be added
-  3. `options?:` [PushOptions](#pushoptions)
+<Parameters parameters={[
+  {
+    name: 'type',
+    type: 'ErrorTypes',
+    description: [
+      () => <>See <a href='#errortypes'>ErrorTypes</a>.</>,
+    ]
+  },
+  {
+    name: 'error',
+    type: 'string | string[]',
+    description: [
+      () => <>
+        <DescriptionList list={[
+          '`string`: the error message to be added.',
+          '`string[]`: an array of error messages to be added.',
+        ]}/>
+      </>,
+    ]
+  },
+  {
+    name: 'options',
+    type: 'PushOptions',
+    description: [
+      () => <>See <a href='#pushoptions'>PushOptions</a>.</>,
+    ]
+  }
+]}/>
 
-- `returns:` void
+<Returns type='void' />
 
 #### Usage:
 ```ts
@@ -250,12 +317,22 @@ type matchesScope = (options: {
 This method check if the error can be displayed or not based on the `includesScope` and `excludesScope` provided.<br/>
 It returns `true` if the error scope has any scope in `includesScope` and has no scope in `excludesScope` or there is no includes or excludes scope and returns `false` otherwise.
 
-- `parameters:`
-  1. `options:` an object with the following properties:
-      - `errScope: ErrorScope` - the scope of the error to check
-      - `includesScope?: ErrorScope` - an optional array of scopes to include
-      - `excludesScope?: ErrorScope` - an optional array of scopes to exclude
-- `returns:` boolean
+<Parameters parameters={[
+  {
+    name: 'options',
+    type: '{ errScope: ErrorScope; includesScope?: ErrorScope; excludesScope?: ErrorScope }',
+    description: [
+      () => <>
+        <DescriptionList list={[
+          '`errScope`: the scope of the error to check.',
+          '`includesScope`: optional array of scopes to include.',
+          '`excludesScope`: optional array of scopes to exclude.',
+        ]}/>
+      </>,
+    ]
+  }
+]}/>
+<Returns type='boolean' />
 
 ### toString()
 <Badge text="visibility" />: `public`
@@ -268,10 +345,17 @@ type toString = (options?: Omit<
 ```
 This method is used to get a string representation of the `AppError` instance.
 
-- `parameters:`
-  1. `options?:` the same as the [matchesScope](#matchesscope) method, but without the `errScope` property as it will be the scope of the current error.
+<Parameters parameters={[
+  {
+    name: 'options',
+    type: "Omit<Parameters<AppError<ErrorTypes>['matchesScope']>[0], 'errScope'>",
+    description: [
+      'Same as matchesScope options, but without `errScope` (it uses each current error scope).',
+    ]
+  }
+]}/>
 
-- `returns:` string
+<Returns type='string' />
 
 #### Usage:
 ```ts
@@ -295,8 +379,7 @@ type throw = (): never
 ```
 throws the `AppError` instance even if there are no errors.
 
-- `parameters:` undefined
-- `returns:` never
+<Returns type='never' />
 
 ### end()
 <Badge text="visibility" />: `public`
@@ -305,8 +388,7 @@ type end (): void
 ```
 throws the `AppError` instance if there are errors.
 
-- `parameters:` undefined
-- `returns:` void
+<Returns type='void' />
 
 #### Usage:
 ```ts

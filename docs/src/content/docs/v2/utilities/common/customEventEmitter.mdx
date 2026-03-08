@@ -4,9 +4,10 @@ description: A class that allows you to emit and listen to custom events.
 ---
 
 import { Aside, Badge, Code } from '@astrojs/starlight/components';
+import { TypeSince, Parameters, Returns, DescriptionList } from '../../components'
 import ErrorScope from '../../components/ErrorScope.astro'
 
-<Badge text="Type" />: `class`
+<TypeSince type='class' since='1.0.0' />
 
 The **`CustomEventEmitter`** class provides a mechanism to emit and listen to custom events in your application. It supports adding, removing, and dispatching events with options for one-time listeners, event preparation, and debugging. The class enforces rules for destructible and non dispatchable events using lock symbols, ensuring robust event management and error handling.
 
@@ -104,17 +105,35 @@ type addOrPrependListener = <Name extends keyof EventMaps>(
 
 This method adds or prepends a new listener to an event
 
-- `parameters`
-    1. `name` - the name of the event to add or prepend the listener to
-    2. `listener` - the listener function to add or prepend
-        - it will be called after the event is dispatched
-        - `parameters:`
-            1. `value` - the return value of the `prepare` method if it exists, otherwise the value passed to the `dispatch` method
-        - `returns`: void
-    3. `listenerOptions`
-        - <code id='once-listener-option'>once</code>: a boolean indicating whether or not the listener should be removed after it is called once
+<Parameters parameters={[
+  {
+    name: 'name',
+    type: 'keyof EventMaps',
+    description: [
+      'The name of the event to add or prepend the listener to.',
+    ]
+  },
+  {
+    name: 'listener',
+    type: "(value: EventMaps[Name]['listenerValue']) => void",
+    description: [
+      'The listener function to add or prepend.',
+      'It will be called after the event is dispatched.',
+      'Its `value` parameter is the `prepare` result (if defined), otherwise the dispatched value.',
+    ]
+  },
+  {
+    name: 'listenerOptions',
+    type: '{ once?: boolean }',
+    description: [
+      () => <>
+        <code id='once-listener-option'>once</code>: a boolean indicating whether the listener should be removed after it is called once.
+      </>,
+    ]
+  }
+]}/>
 
-- `returns`: this
+<Returns type='this' />
 
 ### removeListener()
 
@@ -128,11 +147,20 @@ type removeListener<Name extends keyof EventMaps> = (
 ```
 This method removes a listener from an event
 
-- `parameters`
-    1. `name` - the name of the event to remove the listener from
-    2. `listener` - the listener function to remove
+<Parameters parameters={[
+  {
+    name: 'name',
+    type: 'keyof EventMaps',
+    description: ['The name of the event to remove the listener from.']
+  },
+  {
+    name: 'listener',
+    type: "(value: EventMaps[Name]['listenerValue']) => void",
+    description: ['The listener function to remove.']
+  }
+]}/>
 
-- `returns`: this
+<Returns type='this' />
 
 ### hasEvent()
 
@@ -144,10 +172,15 @@ type hasEvent = (name: keyof EventMaps) => boolean;
 
 This method checks if an event exists
 
-- `parameters`
-    1. `name` - the name of the event to check
+<Parameters parameters={[
+  {
+    name: 'name',
+    type: 'keyof EventMaps',
+    description: ['The name of the event to check.']
+  }
+]}/>
 
-- `returns`: boolean
+<Returns type='boolean' />
 
 
 ### dispatch()
@@ -164,13 +197,29 @@ type dispatch = <Name extends keyof EventMaps>(
 
 This method dispatches an event
 
-- `parameters`
-    1. `name` - the name of the event to dispatch
-    2. <span id='dispatch-value'>`value`</span> - the value to pass to the [prepare](#prepare) method if it exists, otherwise to the event listener
-    3. `options`
-        - `lockSymbol`: a symbol that will be used to unlock the event.
+<Parameters parameters={[
+  {
+    name: 'name',
+    type: 'keyof EventMaps',
+    description: ['The name of the event to dispatch.']
+  },
+  {
+    name: 'value',
+    type: "EventMaps[Name]['dispatchValue']",
+    description: [
+      () => <><span id='dispatch-value' />Value passed to <a href='#prepare'>prepare</a> if defined, otherwise to the listener.</>,
+    ]
+  },
+  {
+    name: 'options',
+    type: '{ lockSymbol: symbol }',
+    description: [
+      '`lockSymbol`: a symbol used to unlock non-dispatchable events.',
+    ]
+  }
+]}/>
 
-- `returns`: this
+<Returns type='this' />
 
 <Aside type='note'>
 Dispatching a [non-dispatchable](#dispatchable) event requires the same [lockSymbol](#locksymbol) that was provided to the event during construction; otherwise, an error will be thrown.
@@ -189,11 +238,20 @@ type destruct = <Name extends keyof EventMaps>(
 
 This method destructs an event
 
-- `parameters`
-    1. `name` - the name of the event to destruct
-    2. `lockSymbol` - a symbol that will be used to unlock the event.
+<Parameters parameters={[
+  {
+    name: 'name',
+    type: 'keyof EventMaps',
+    description: ['The name of the event to destruct.']
+  },
+  {
+    name: 'lockSymbol',
+    type: 'symbol',
+    description: ['A symbol used to unlock destructible events.']
+  }
+]}/>
 
-- `returns`: this
+<Returns type='this' />
 
 <Aside type='note' title='Notes'>
 - Destructing a [non-destructible](#destructible) event will throw an error.
@@ -213,14 +271,24 @@ type debug = (listener: EventDebugListener) => this;
 
 This method adds a debug listener to the event emitter.
 
-- `parameters`
-    1. `listener` - a function that will be called for various event operations
-        - `parameters`
-            1. `eventName` - the name of the event
-            2. `operationType` - the type of operation that was performed
-            3. `details` - additional details about the operation
+<Parameters parameters={[
+  {
+    name: 'listener',
+    type: 'EventDebugListener',
+    description: [
+      'Function called for event operations.',
+      () => <>
+        <DescriptionList list={[
+          '`eventName`: the name of the event.',
+          '`operationType`: type of operation performed.',
+          '`details`: additional details about the operation.',
+        ]}/>
+      </>,
+    ]
+  }
+]}/>
 
-- `returns`: this
+<Returns type='this' />
 
 <Aside type='tip' title='Debug Listener Details'>
 Details will be:
@@ -253,9 +321,18 @@ type insertListenerPriority = <Name extends keyof EventMaps>(
 
 This method is used by the [addListener](#addlistener) and [prependListener](#prependlistener) methods to insert a listener at a specific priority.
 
-- `parameters`: an object with the same properties as the [addListener](#addlistener) and [prependListener](#prependlistener) methods, except for `priority`, which is set to `'normal'` if the method is `addListener` and `'prepend'` if the method is `prependListener`.
+<Parameters parameters={[
+  {
+    name: 'options',
+    type: "{ name: keyof EventMaps; listener: (value: any) => void; listenerOptions?: AddListenerOptions; priority: 'normal' | 'prepend' }",
+    description: [
+      'Same as add/prepend listener options, with explicit `priority`.',
+      "Priority is `'normal'` for addListener and `'prepend'` for prependListener.",
+    ]
+  }
+]}/>
 
-- `returns`: void
+<Returns type='void' />
 
 ## Event Data
 ```ts

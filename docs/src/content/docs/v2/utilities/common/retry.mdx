@@ -1,47 +1,98 @@
 ---
 title: retry
-description: A function that retries a function until it returns a non-undefined value or the maximum number of retries is reached or the total timeout duration elapses.
+description: Retry a function until it returns a defined value, retries end, or timeout elapses.
 ---
-import { Aside, Badge, Code } from '@astrojs/starlight/components';
-import ErrorScope from '../../components/ErrorScope.astro'
 
-<Badge text="Type:" /> `function`
+import {
+  TypeSince,
+  ErrorScope,
+  Parameters,
+  DescriptionList,
+  Default,
+  Returns,
+} from '../../components'
 
-<Badge text="since:" /> `2.5.0`
+<TypeSince since='2.5.0' type='function'/>
 
-The **`retry`** function will repeatedly retries a function until it returns a non-undefined value or the maximum number of retries is reached or the total timeout duration elapses.
+The **`retry`** function repeatedly calls a function until it returns a value other than `undefined`, retries are exhausted, or timeout is reached.
 
 <ErrorScope errorScope='retryErrorScope' />
 
-:::note
-this function does not handle errors thrown by the callback function.
-:::
-
 ## Usage
 ```ts
-const retryFunction = async () => {
-  const response = await fetch("/some-endpoint");
-  return response.ok ? response.json() : undefined; // only retry if the response is not ok or until timeout or retries are exhausted
-};
-await retry(retryFunction);
-await retry({ retries: 3 }, retryFunction);
-await retry({ timeout: 100 }, retryFunction);
-await retry({ interval: 10 }, retryFunction);
-await retry({ retries: 3, interval: 10, timeout: 100 }, retryFunction);
+import { retry } from '@mustib/utils';
+
+await retry(async () => {
+  const ok = Math.random() > 0.7;
+  return ok ? 'done' : undefined;
+});
+
+await retry({ retries: 5, interval: 100, timeout: 1000 }, async () => {
+  const response = await fetch('/some-endpoint');
+  return response.ok ? response.json() : undefined;
+});
 ```
 
 ## Definition
 ```ts
-export function retry<T extends () => any>(optionsOrFn: Options | T, fn?: T): Promise<ReturnType<T> | undefined> {}
+function retry<T extends () => any>(fn: T): Promise<ReturnType<T> | undefined>
+function retry<T extends () => any>(
+  options: {
+    retries?: number;
+    interval?: number;
+    timeout?: number;
+  },
+  fn: T,
+): Promise<ReturnType<T> | undefined>
 ```
 
-- `parameters:`
-  1. `optionsOrFn` - Either an options object configuring the retry behavior or the function to retry.
-  2. `fn` - The function to retry if the first argument is an options object.
-- `returns:` a promise that resolves to the first non-undefined value returned by the callback function or undefined if the maximum number of retries is reached or the total timeout duration elapses.
+<Parameters parameters={[
+  {
+    name: 'optionsOrFn',
+    type: 'Options | Function',
+    description: [
+      'Either the callback function or an options object.',
+      () => <>
+        Options object fields:
+        <DescriptionList list={[
+          () => <>
+            <code>retries</code>
+            <DescriptionList list={[
+              'Maximum attempts.',
+              () => <Default value='timeout === undefined ? 3 : Infinity' />,
+            ]} />
+          </>,
+          () => <>
+            <code>interval</code>
+            <DescriptionList list={[
+              'Delay in milliseconds between attempts.',
+              () => <Default value='0' />,
+            ]} />
+          </>,
+          () => <>
+            <code>timeout</code>
+            <DescriptionList list={[
+              'Maximum total time in milliseconds.',
+              () => <Default value='undefined' />,
+            ]} />
+          </>,
+        ]} />
+      </>,
+    ]
+  },
+  {
+    name: 'fn',
+    type: 'Function',
+    description: [
+      'Callback to retry when `options` is provided as first argument.',
+    ]
+  }
+]} />
 
-### Options
+<Returns type='Promise<ReturnType<T> | undefined>' details={[
+  'First non-undefined callback value, or `undefined` if retry constraints are reached.',
+]}/>
 
-- `retries` - The maximum number of times to retry the function. Defaults to `3` if `timeout` is `undefined` and `Infinity` if `timeout` is defined.
-- `interval` - The interval in milliseconds between retries. Defaults to `0`.
-- `timeout` - The total timeout duration in milliseconds. Defaults to `undefined`.
+## Notes
+- Errors thrown by the callback are not caught by `retry`; they reject as normal.
+- Invalid options throw an `AppError` scoped with `retryErrorScope`.

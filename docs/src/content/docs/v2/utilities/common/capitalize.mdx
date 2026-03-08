@@ -1,57 +1,80 @@
 ---
 title: capitalize
-description: A function that capitalizes the first letter of a string or each word in a string.
+description: Capitalize a string, or each token in a string.
 ---
 
-import { Aside, Badge, Code } from '@astrojs/starlight/components';
+import {
+  Type,
+  Parameters,
+  DescriptionList,
+  Default,
+  Returns,
+} from '../../components'
 
-<Badge text="Type" />: `function`
+<Type type='function' />
 
-The **`capitalize`** function capitalizes the first letter of a string or each word in a string with a custom splitter and joiner.
+The **`capitalize`** function capitalizes either:
+- the first character in the whole string, or
+- each token after splitting by a separator.
 
 ## Usage
 ```ts
-console.log(capitalize('hello world')); // Hello world
+import { capitalize } from '@mustib/utils';
 
-console.log(capitalize('hello world', { onlyFirstWord: true })); // Hello world
-
-console.log(capitalize('hello-world')); // Hello-world
-
-console.log(capitalize('hello-world'), { splitter: '-'}); // Hello-World
-
-console.log(capitalize('hello-world'), { splitter: '-', joiner: ' '}); // Hello World
-
-console.log(capitalize('hello world'), { joiner: '-'}); // Hello-World
+capitalize('hello world'); // Hello World
+capitalize('hello world', { onlyFirstWord: true }); // Hello world
+capitalize('hello-world', { splitter: '-', joiner: ' ' }); // Hello World
 ```
 
 ## Definition
 ```ts
-export function capitalize(str: string, options?: Options): string {}
+function capitalize(
+  str: string,
+  options?: {
+    onlyFirstWord?: boolean;
+    splitter?: string;
+    joiner?: string;
+  },
+): string { }
 ```
-- `parameters:`
-    1. `str:` string
-        - The string to capitalize
-    2. `options?:` [Options](#options)
-- `returns:` string
 
-## Types
+<Parameters parameters={[
+  {
+    name: 'str',
+    type: 'string',
+    description: [
+      'Input string to capitalize.',
+    ]
+  },
+  {
+    name: 'options',
+    type: '{\n\tonlyFirstWord?: boolean,\n\tsplitter?: string,\n\tjoiner?: string,\n}',
+    description: [
+      () => <>
+        <code>options.onlyFirstWord</code>
+        <DescriptionList list={[
+          'When true, only the first word is capitalized.',
+          () => <Default value='false' />,
+        ]} />
+      </>,
+      () => <>
+        <code>options.splitter</code>
+        <DescriptionList list={[
+          'Delimiter used to split the input string before capitalization.',
+          () => <Default value="' '" />,
+        ]} />
+      </>,
+      () => <>
+        <code>options.joiner</code>
+        <DescriptionList list={[
+          'Delimiter used to join transformed parts.',
+          () => <Default value='splitter' />,
+        ]} />
+      </>,
+    ]
+  }
+]} />
 
-### Options
-```ts
-type Options = {
-  onlyFirstWord?: boolean;
-  splitter?: string;
-  joiner?: string;
-}
-```
-- ### onlyFirstWord
-    - Whether to capitalize only the first word.
-    - default value is: `false`
-
-- ### splitter
-    - The delimiter to split the string into words.
-    - default value is: `' '`
-
-- ### joiner
-    - The delimiter to join the capitalized words.
-    - default value is: [`splitter`](#splitter)
+<Returns type='string' details={[
+  'Capitalized output string. If input is empty, returns the original value.',
+]}/>

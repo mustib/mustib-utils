@@ -1,13 +1,19 @@
 ---
 title: getDirname
-description: get __dirname variable in es module
+description: Resolve __dirname in ES modules from import.meta.url.
 ---
 
-import { Badge } from '@astrojs/starlight/components';
+import {
+  Type,
+  Parameters,
+  Returns,
+} from '../../components'
 
-<Badge text="Type" />: `function`
+<Type type='function' />
 
-This function, `getDirname`, is used to derive the `__dirname` variable in an ES module context. It takes the `import.meta.url` of the module as input and returns the directory name of the file path. This utility is necessary because ES modules do not have access to the `__dirname` variable that is available in CommonJS modules.
+The **`getDirname`** function resolves the directory path of a module file in ESM environments.
+
+Use it when you need `__dirname`-like behavior with `import.meta.url`.
 
 ## Usage
 ```ts
@@ -18,10 +24,19 @@ const __dirname = getDirname(import.meta.url);
 
 ## Definition
 ```ts
-export function getDirname(url: string): string {}
+function getDirname(metaUrl: string): string { }
 ```
-- `parameters:`
-    1. `url:` string
-        - The `import.meta.url` of the module
-- `returns:` string
-    - The directory name of the file path
+
+<Parameters parameters={[
+  {
+    name: 'metaUrl',
+    type: 'string',
+    description: [
+      'Usually the value of `import.meta.url` from the current module.',
+    ]
+  }
+]} />
+
+<Returns type='string' details={[
+  'Absolute directory path for the provided module URL.',
+]}/>

@@ -2,10 +2,11 @@
 title: EnvVars
 description: A versatile utility for handling environment variables
 ---
-import { Aside, Code, Badge, Steps } from '@astrojs/starlight/components';
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import { TypeSince, Parameters, DescriptionList, Default } from '../../components'
 import ErrorScope from '../../components/ErrorScope.astro'
 
-<Badge text="Type" />: `class`
+<TypeSince type='class' since='1.0.0' />
 
 The `EnvVars` class is a versatile utility designed for type-safe access to environment variables. It simplifies handling environment variables by offering features such as type parsing, retrieving values tailored to specific environments, reading from various sources, and marking variables as dynamic. Additionally, it ensures robust error handling, preventing your application from proceeding with unexpected behavior when issues arise.
 
@@ -124,29 +125,53 @@ In the `app.ts` file we were able to:
 type EnvVars = new (options: ConstructorParams<EnvVarsMapObj>): EnvVars
 ```
 
-- `parameters` an object with the following properties:
-    - `useDynamicValues:`
-        - A `boolean` indicates whether the generated env object should be dynamic or not.
-        - Defaults to `false`.
+<Parameters parameters={[
+  {
+    name: 'options',
+    type: 'ConstructorParams<EnvVarsMapObj>',
+    description: [
+      () => <>
+        <code>useDynamicValues</code>
+        <DescriptionList list={[
+          'A boolean indicating whether generated values should be dynamic.',
+          () => <Default value='false' />,
+        ]}/>
+      </>,
+      () => <>
+        <code id='constructor-sources'>sources</code>
+        <DescriptionList list={[
+          'Defines source(s) of environment variables.',
+          'Can be a `.env` file path string, one EnvVarsSourcesObj, or an array of EnvVarsSourcesObj.',
+        ]}/>
+      </>,
+      () => <>
+        <code>mapObj</code>
+        <DescriptionList list={[
+          () => <>See <a href='#envvarsmapobj'>EnvVarsMapObj</a>.</>,
+        ]}/>
+      </>,
+      () => <>
+        <code>currentEnv</code>
+        <DescriptionList list={[
+          'A string representing the current environment.',
+          () => <Default value='process.env.NODE_ENV' />,
+        ]}/>
+      </>,
+      () => <>
+        <code>enumerable</code>
+        <DescriptionList list={[
+          'A boolean indicating whether generated keys should be enumerable.',
+          () => <Default value='false' />,
+        ]}/>
+      </>,
+    ]
+  }
+]}/>
 
-    - <code id='constructor-sources'>sources</code>: Used to define the source of environment variables, which can be one of the following:
-        - A `string` representing the path to a `.env` file
-        - A single [EnvVarsSourcesObj](#envvarssourcesobj) object, or an array of such objects.
-      <Aside title='Notes' type='note'>
-        - Passing a `string` is equivalent to passing an [EnvVarsSourcesObj](#envvarssourcesobj) object with the following shape: `{ fromFile: string }`.
-        
-        - `undefined` is equivalent to passing an [EnvVarsSourcesObj](#envvarssourcesobj) object with the following shape: `{ fromObject: process.env }`.
-      </Aside>
-      
-    - `mapObj:` [EnvVarsMapObj](#envvarsmapobj)
-
-    - `currentEnv:`
-      - a `string` representing the current env.
-      - defaults to `process.env.NODE_ENV`.
-
-    - `enumerable:` 
-        - a `boolean` indicates whether the generated env object should be enumerable or not.
-        - defaults to `false`.
+<Aside title='Notes' type='note'>
+- Passing a string in `sources` is equivalent to `{ fromFile: string }`.
+- Passing `undefined` in `sources` is equivalent to `{ fromObject: process.env }`.
+</Aside>
 
 
 ## EnvVarsMapObj
@@ -252,4 +277,3 @@ An object where the keys are possible environment names and the values are any v
 For example, if the environment is `production`, the value of the key `production` will be used. If the environment is `development`, the value of the key `development` will be used, and so on. If sources has `PORT` and `HOST` as variables, then possible values for the `whenNodeEnvIs` object are `PORT` and `HOST`.
 
 The special key `anyEnv` can be used to specify a fallback value for any environment. This is useful when you want to provide a default value for an environment variable that is not defined in the current environment.
-

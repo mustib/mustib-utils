@@ -1,33 +1,49 @@
 ---
 title: TypedEventEmitter
-description: A type-only event emitter for Node.js, allowing you to create an event emitter with a typed events
+description: A type utility for strongly typed Node.js EventEmitter events.
 ---
 
-import { Badge } from '@astrojs/starlight/components';
+import {
+  Type,
+} from '../../components'
 
-<Badge text="Type" />: `type-only`
+<Type type='type-only' />
 
-The **`TypedEventEmitter`** is a type-only utility for creating an event emitter with a strongly typed interface in Node.js. It allows you to define the name of the events and their associated data types, making it easier to handle and manage events in your code.
+The **`TypedEventEmitter`** type adds compile-time typing to event names and listener arguments for a Node.js `EventEmitter` instance.
 
 ## Usage
 ```ts
 import { EventEmitter } from 'node:events';
+import type { TypedEventEmitter } from '@mustib/utils/node';
 
 type MyEvents = {
-  'success': undefined;
-  'fail': {message: string, code: number};
+  success: undefined;
+  fail: { message: string; code: number };
+  data: [id: string, payload: { ok: boolean }];
 };
 
 const emitter = new EventEmitter() as TypedEventEmitter<MyEvents>;
 
-emitter.on('success', () => {
-  console.log('success');
-});
-
+emitter.on('success', () => {});
 emitter.on('fail', ({ message, code }) => {
   console.log(message, code);
+});
+emitter.on('data', (id, payload) => {
+  console.log(id, payload.ok);
 });
 
 emitter.emit('success', undefined);
 emitter.emit('fail', { message: 'error', code: 500 });
+emitter.emit('data', 'evt-1', { ok: true });
+```
+
+## Definition
+```ts
+type TypedEventEmitter<T extends Record<string, any>> = {
+  emit<Name extends keyof T, Args extends T[Name]>(
+    eventName: Name,
+    ...args: Args extends any[] ? Args : [Args]
+  ): boolean;
+  // typed on/once/addListener/prependListener/prependOnceListener/off/removeListener
+}
 ```
