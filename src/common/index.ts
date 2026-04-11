@@ -4,6 +4,7 @@ export * from './CustomEventEmitter';
 export * from './DeferredValue';
 export * from './debounce';
 export * from './getTypeof';
+export * from './math'
 export * from './mergeTwoObjects';
 export * from './retry';
 export * from './time';
