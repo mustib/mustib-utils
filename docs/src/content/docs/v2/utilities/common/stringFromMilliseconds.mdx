@@ -81,6 +81,7 @@ export function stringFromMilliseconds(
       maxUnit: "s" | "ms" | "m" | "h" | "d" | "w" | "mo" | "y",
       minUnit: "s" | "ms" | "m" | "h" | "d" | "w" | "mo" | "y",
       showZeroValuedUnits: boolean,
+      trimZeroValuedUnits: boolean,
       fixedWidth: boolean,
       decimalBehavior: 'round' | 'floor' | 'ceil',
       maxDecimalCount: number,
@@ -139,10 +140,41 @@ export function stringFromMilliseconds(
           'A boolean value that indicates whether to display all time units from minUnit to maxUnit, even if they have zero values',
 
           () => <>
-            For example, the output might be <code>1y:0mo:0w:0d:0h:2m:0s:5ms</code>
+            For example, the output might be&nbsp;<code>0y:0mo:0w:0d:0h:2m:0s:5ms</code>
+            &nbsp;instead of&nbsp;
+            <code>2m:5ms</code>
           </>,
 
           () => <Default value='false'/>,
+        ]}/>
+      </>,
+      /**
+      *
+      *
+      *
+      */
+      () => <>
+        <code>options.trimZeroValuedUnits</code>
+        <DescriptionList list={[
+          () => <Since since='2.10.0'/>,
+          () => <>
+            A boolean value that indicateswhether to display all time units from minUnit to the last used maxUnit that has no zero values when &nbsp;
+            <code>showZeroValuedUnits</code> option set to true
+          </>,
+
+          () => <>
+            For example, the output might be &nbsp;<code>2m:0s:5ms</code>
+            &nbsp; instead of &nbsp;
+            <code>0y:0mo:0w:0d:0h:2m:0s:5ms</code>
+          </>,
+
+          () => <Default value='false'/>,
+
+          () => <Aside type='note'>
+            <code>showZeroValuedUnits</code>
+            &nbsp; and &nbsp;
+            <code>maxUnits</code> options must be set for this option to take effect
+          </Aside>,
         ]}/>
       </>,
       /**

@@ -1,0 +1,62 @@
+---
+title: mathClamp
+description: Clamps a number to be within a specified range.
+sidebar:
+  badge: new
+---
+
+import {
+  TypeSince,
+  Parameters,
+  Returns,
+} from '../../components'
+
+<TypeSince type='function' since='2.10.0'/>
+
+The **`mathClamp`** function Clamps a number to be within a specified range
+
+## Usage
+```ts
+import { mathClamp } from '@mustib/utils'
+
+mathClamp(1,2,3) // 2
+mathClamp(2,1,3) // 2
+mathClamp(1,3,2) // 2
+```
+
+## Definition
+```ts
+function mathClamp(
+  minValue: number,
+  currentValue: number,
+  maxValue: number
+): number
+```
+
+<Parameters parameters={[
+  {
+    name: 'minValue',
+    type: 'number',
+    description: [
+      'The minimum allowed value for the number.',
+    ]
+  },
+  {
+    name: 'currentValue',
+    type: 'number',
+    description: [
+      'The current value of the number.',
+    ]
+  },
+  {
+    name: 'currentValue',
+    type: 'number',
+    description: [
+      'The maximum allowed value for the number.',
+    ]
+  },
+]} />
+
+<Returns type='number' details={[
+  'The clamped value, which is within the specified range [minValue, maxValue]',
+]}/>
