@@ -220,4 +220,38 @@ describe('stringFromMilliseconds', () => {
     ).toBe('00h:00m:00s');
 
   });
+
+  it('should trimZeroValuedUnits if provided', () => {
+    expect(
+      stringFromMilliseconds(0, {
+        trimZeroValuedUnits: true
+      }),
+      "should has no effect if showZeroValuedUnits is undefined"
+    ).toBe('0ms');
+
+    expect(
+      stringFromMilliseconds(0, {
+        showZeroValuedUnits: false,
+        trimZeroValuedUnits: true
+      }),
+      "should has no effect if showZeroValuedUnits is false"
+    ).toBe('0ms');
+
+    expect(
+      stringFromMilliseconds(0, {
+        showZeroValuedUnits: true,
+        trimZeroValuedUnits: true
+      }),
+      "should has no effect if maxUnit is not defined and showZeroValuedUnits is true"
+    ).toBe('0y:0mo:0w:0d:0h:0m:0s:0ms');
+
+    expect(
+      stringFromMilliseconds(2000, {
+        showZeroValuedUnits: true,
+        trimZeroValuedUnits: true,
+        maxUnit: 's'
+      }),
+      "should trim zero valued units if maxUnit is defined and showZeroValuedUnits is true"
+    ).toBe('2s:0ms');
+  })
 });

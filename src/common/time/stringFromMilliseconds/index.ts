@@ -5,27 +5,36 @@ import { timeUnitsNamesAsc, timeUnits, maxUnit as _maxUnit, minUnit as _minUnit,
 
 type Options = Partial<{
   /**
-   * Specifies the largest time unit to be included in the string representation, starting from y to ms.
+   * Specifies the largest time unit to be included in the string representation, starting from `y` to `ms`.
    * @default 'y'
    */
   maxUnit: TimeUnitsNames;
 
   /**
-   * Specifies the smallest time unit to be included in the string representation, starting from ms to y.
+   * Specifies the smallest time unit to be included in the string representation, starting from `ms` to `y`.
    * @default 'ms'
    */
   minUnit: TimeUnitsNames;
 
   /**
    * Indicates whether to display all time units from minUnit to maxUnit, even if they have zero values.
-   * For example, the output might be 1y:0mo:0w:0d:0h:2m:0s:5ms.
+   * For example, the output might be `0y:0mo:0w:0d:0h:2m:0s:5ms` instead of `2m:5ms`.
    * @default false
    */
   showZeroValuedUnits: boolean;
 
   /**
+   * Indicates whether to display all time units from minUnit to the last used maxUnit that has no zero values when `showZeroValuedUnits` option set to true.
+   * For example the output might be `2m:0s:5ms` instead of `0y:0mo:0w:0d:0h:2m:0s:5ms`
+   * 
+   * **NOTE** `showZeroValuedUnits` and `maxUnit` options must be set for this option to take effect.
+   * @default false
+   */
+  trimZeroValuedUnits: boolean;
+
+  /**
    * Specifies whether to pad the time units' string representation with leading zeros to maintain a fixed width.
-   * For example, the output might be 01mo:02d:23m:03s:005ms instead of 1mo:2d:23m:3s:5ms.
+   * For example, the output might be `01mo:02d:23m:03s:005ms` instead of `1mo:2d:23m:3s:5ms`.
    * @default false
    */
   fixedWidth: boolean;
@@ -80,6 +89,7 @@ export function stringFromMilliseconds(
     maxUnit = _maxUnit.name,
     minUnit = _minUnit.name,
     showZeroValuedUnits = false,
+    trimZeroValuedUnits = false,
     fixedWidth = false,
     unitsAlias,
     separator = ':',
@@ -90,11 +100,21 @@ export function stringFromMilliseconds(
   const unitsRangeDesc = timeUnitsNamesAsc.slice(minUnitIndex, maxUnitIndex + 1).reverse();
   let remainingMilliseconds = milliseconds < 0 ? -milliseconds : milliseconds;
 
+  /**
+   * This variable is used to store the max used unit that has no zero valued unit value for trimZeroValuedUnits option to work
+   */
+  let maxUsedUnitData: (typeof timeUnits)[keyof typeof timeUnits] | undefined
+
   for (const unit of unitsRangeDesc) {
     const unitData = timeUnits[unit]
     if (remainingMilliseconds < unitData.value) continue;
     partsData[unit].value = Math.floor(remainingMilliseconds / unitData.value);
     remainingMilliseconds %= unitData.value
+
+    /**
+     * Loop is in descending order so the first non zero valued unit is the max used unit
+     */
+    if (!maxUsedUnitData) maxUsedUnitData = unitData
   }
 
   if (remainingMilliseconds > 0) {
@@ -137,11 +157,14 @@ export function stringFromMilliseconds(
 
   const formattedParts = (unitsRangeDesc.reduce((result, unit) => {
     const partValue = partsData[unit].value
-    if (partValue === 0 && !showZeroValuedUnits) return result
+    const isUnitAfterMaxUsed = maxUsedUnitData && trimZeroValuedUnits && maxUsedUnitData.index < timeUnits[unit].index;
+
+    if (partValue === 0 && (!showZeroValuedUnits || isUnitAfterMaxUsed)) return result
 
     result.push(generatePartString({ partValue, unitAlias: unitsAlias?.[unit], unitName: unit, fixedWidth }))
     return result
   }, [] as string[]))
+
 
   return formattedParts.length > 0 ? formattedParts.join(separator) : generatePartString({ unitName: minUnit, partValue: partsData[minUnit].value, unitAlias: unitsAlias?.[minUnit], fixedWidth })
 }
