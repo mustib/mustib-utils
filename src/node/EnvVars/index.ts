@@ -18,6 +18,8 @@ import type {
   CombinedEnvVarsSources,
 } from './types';
 
+type ErrorTypes = 'Invalid' | 'Undefined' | 'Failed' | 'Not-Found';
+
 export const envVarsCustomEventEmitterErrorScope = [
   Symbol('@mustib/utils/EnvVars'),
   LIBRARY_ERROR_SCOPE,
@@ -43,7 +45,7 @@ type EnvVars = new <VarsMapObj extends EnvVarsMapObj = EnvVarsMapObj>(
 
 function parseEnvFile(path: string) {
   if (!existsSync(path)) {
-    AppError.throw(
+    AppError.throw<ErrorTypes>(
       'Not-Found',
       `provided env file path (${path}) doesn't exist`,
       { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
@@ -63,7 +65,7 @@ function parseEnvFile(path: string) {
     const [key = '', value] = line.split('=').map((val) => val.trim());
 
     if (key === '')
-      AppError.throw(
+      AppError.throw<ErrorTypes>(
         'Invalid',
         `empty variable name found in env file (${path}) with value = (${value})`,
         { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
@@ -160,7 +162,7 @@ function combineEnvVarsSources(sources: EnvVarsSources) {
       envVarsSources = [{ fromFile: sources as string }];
       break;
     default:
-      AppError.throw(
+      AppError.throw<ErrorTypes>(
         'Invalid',
         `invalid env vars source type, only string, object and array are supported, but instead got (${typeofSources})`,
         { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
@@ -176,16 +178,16 @@ function combineEnvVarsSources(sources: EnvVarsSources) {
     if (typeofFromFile === 'string') {
       pushToCombinedEnvVars(parseEnvFile(fromFile!));
     } else if (typeofFromFile !== 'undefined')
-      AppError.throw(
+      AppError.throw<ErrorTypes>(
         'Invalid',
-        `fromFile in EnvVars sources must be an file but instead got (${typeofFromFile})`,
+        `fromFile in EnvVars sources must be a string but instead got (${typeofFromFile})`,
         { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
       );
 
     const typeofFromObject = getTypeof(fromObject);
     if (typeofFromObject === 'object') pushToCombinedEnvVars(fromObject!);
     else if (typeofFromObject !== 'undefined')
-      AppError.throw(
+      AppError.throw<ErrorTypes>(
         'Invalid',
         `fromObject in EnvVars sources must be an object but instead got (${typeofFromObject})`,
         { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
@@ -197,7 +199,7 @@ function combineEnvVarsSources(sources: EnvVarsSources) {
       const typeofVars = getTypeof(vars);
 
       if (typeofVars !== 'object') {
-        AppError.throw(
+        AppError.throw<ErrorTypes>(
           'Invalid',
           `failed to get env vars from dynamic function as it returned a value of type (${typeofVars}) which is not an object`,
           { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
@@ -206,7 +208,7 @@ function combineEnvVarsSources(sources: EnvVarsSources) {
 
       pushToCombinedEnvVars(vars);
     } else if (typeofFromDynamicFunction !== 'undefined')
-      AppError.throw(
+      AppError.throw<ErrorTypes>(
         'Invalid',
         `fromDynamicFunction in EnvVars sources must be a function but instead got (${typeofFromDynamicFunction})`,
         { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
@@ -216,9 +218,9 @@ function combineEnvVarsSources(sources: EnvVarsSources) {
   const hasAssignedValue = JSON.stringify(combinedEnvVarsSources) !== '{}';
 
   if (!hasAssignedValue) {
-    AppError.throw('Undefined', 'undefined env vars sources',
-      { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
-    );
+    AppError.throw<ErrorTypes>('Undefined', 'undefined env vars sources', {
+      pushOptions: { scope: envVarsCustomEventEmitterErrorScope },
+    });
   }
 
   return combinedEnvVarsSources;
@@ -242,7 +244,7 @@ function getVarFromSources({
   } else if (Object.hasOwn(whenNodeEnvIs, 'anyEnv')) {
     varNameInCombinedEnvVars = whenNodeEnvIs.anyEnv;
   } else {
-    AppError.throw(
+    AppError.throw<ErrorTypes>(
       'Undefined',
       `${varName} in envVars has not assigned value because defined envs in whenNodeEnvIs has not matched currentEnv which is ${currentEnv} and there is no anyEnv defined in whenNodeEnvIs`,
       { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
@@ -259,7 +261,7 @@ function getVarFromSources({
   );
 
   if (indexOfVarNameInCombinedEnvVars === -1) {
-    return AppError.throw(
+    return AppError.throw<ErrorTypes>(
       'Undefined',
       `(${varName}) in envVars has not assigned value because (${varNameInCombinedEnvVars}) value in the currentEnv which is (${currentEnv}) is undefined and cannot be found in the provided sources`,
       { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
@@ -302,7 +304,7 @@ function parseVarValueFromString({
         parseAsStringHandlers[parseAsStringValue](varValue);
 
       if (!isValid) {
-        AppError.throw(
+        AppError.throw<ErrorTypes>(
           'Failed',
           `failed to parse (${varName}) in envVars as a ${parseAsStringValue}, because the assigned value for the current env which is (${currentEnv}) from the variable (${varNameInAllEnvVarsFromSources}) is of type (${valueType}), if you need to manually parse it you can use parseAs as a function`,
           { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
@@ -313,7 +315,7 @@ function parseVarValueFromString({
     }
 
     default:
-      return AppError.throw(
+      return AppError.throw<ErrorTypes>(
         'Invalid',
         `parseAs as a string value must be a "string" or "number" or "date" or "bool" but instead got (${parseAsStringValue})`,
         { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
@@ -344,7 +346,7 @@ function getParseAsHandler({
   });
 
   if (typeof varValue !== 'string')
-    return AppError.throw(
+    return AppError.throw<ErrorTypes>(
       'Invalid',
       `expected the value for (${varName}) which has the name (${varNameInSources}) in the sources for the current env which is (${currentEnv}) to be a string, but received type (${getTypeof(varValue)}).`,
       { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
@@ -375,7 +377,7 @@ function getParseAsHandler({
         });
       break;
     default:
-      return AppError.throw(
+      return AppError.throw<ErrorTypes>(
         'Invalid',
         `parseAs must be a string with a value of ("string" | "number" | "date" | "bool") or a function that parses the value and returns it, but ${typeofParseAs} is not a valid parseAs type`,
         { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
@@ -398,9 +400,9 @@ export const EnvVars = class EnvVars {
     currentEnv = process.env.NODE_ENV!,
   }: ConstructorParams<EnvVarsMapObj>) {
     if (currentEnv === undefined) {
-      // eslint-disable-next-line no-console
-      console.warn('currentEnv is undefined');
-      throw new Error(currentEnv);
+      AppError.throw<ErrorTypes>('Undefined', 'currentEnv is undefined', {
+        pushOptions: { scope: envVarsCustomEventEmitterErrorScope },
+      });
     }
 
     const combinedEnvVarsSources = combineEnvVarsSources(sources);
