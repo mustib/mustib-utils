@@ -226,6 +226,30 @@ function combineEnvVarsSources(sources: EnvVarsSources) {
   return combinedEnvVarsSources;
 }
 
+function getVarFromSourcesWhenNodeEnvIsObject({
+  whenEnvIsValueObject,
+}: {
+  whenEnvIsValueObject: Extract<
+    EnvVarsMapObj[string]['whenNodeEnvIs'][string],
+    object
+  >;
+}): {
+  assignedSource: Record<string, string>;
+  varNameInSources: string;
+  varValue: string | undefined;
+} {
+  const { defaultValue, varName } = whenEnvIsValueObject;
+  const defaultValueVarName = `__${varName}_default_value__`;
+
+  return {
+    assignedSource: {
+      [defaultValueVarName]: defaultValue,
+    },
+    varNameInSources: defaultValueVarName,
+    varValue: defaultValue,
+  }
+}
+
 function getVarFromSources({
   whenNodeEnvIs,
   currentEnv,
@@ -237,12 +261,12 @@ function getVarFromSources({
   varName: string;
   combinedEnvVarsSources: CombinedEnvVarsSources;
 }) {
-  let varNameInCombinedEnvVars: string | undefined;
+  let varValueInWhenNodeEnvIs: EnvVarsMapObj[string]['whenNodeEnvIs'][string];
 
   if (Object.hasOwn(whenNodeEnvIs, currentEnv)) {
-    varNameInCombinedEnvVars = whenNodeEnvIs[currentEnv];
+    varValueInWhenNodeEnvIs = whenNodeEnvIs[currentEnv];
   } else if (Object.hasOwn(whenNodeEnvIs, 'anyEnv')) {
-    varNameInCombinedEnvVars = whenNodeEnvIs.anyEnv;
+    varValueInWhenNodeEnvIs = whenNodeEnvIs.anyEnv;
   } else {
     AppError.throw<ErrorTypes>(
       'Undefined',
@@ -250,6 +274,11 @@ function getVarFromSources({
       { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },
     );
   }
+
+  const varNameInCombinedEnvVars =
+    typeof varValueInWhenNodeEnvIs === 'string'
+      ? varValueInWhenNodeEnvIs
+      : varValueInWhenNodeEnvIs?.varName;
 
   const indexOfVarNameInCombinedEnvVars = combinedEnvVarsSources.findIndex(
     (obj) => {
@@ -261,7 +290,13 @@ function getVarFromSources({
   );
 
   if (indexOfVarNameInCombinedEnvVars === -1) {
-    return AppError.throw<ErrorTypes>(
+    if (typeof varValueInWhenNodeEnvIs === 'object') {
+      return getVarFromSourcesWhenNodeEnvIsObject({
+        whenEnvIsValueObject: varValueInWhenNodeEnvIs
+      })
+    }
+
+    AppError.throw<ErrorTypes>(
       'Undefined',
       `(${varName}) in envVars has not assigned value because (${varNameInCombinedEnvVars}) value in the currentEnv which is (${currentEnv}) is undefined and cannot be found in the provided sources`,
       { pushOptions: { scope: envVarsCustomEventEmitterErrorScope } },

@@ -55,6 +55,7 @@ describe('EnvVars', () => {
     });
 
     expect(envVars.testVar).toBe('TEST_VAR');
+    delete process.env.TEST_VAR;
   });
 
   it('should use process.env.NODE_ENV as default env', () => {
@@ -510,5 +511,48 @@ describe('EnvVars', () => {
           },
         }),
     ).to.throw(AppError, 'Undefined');
+  });
+
+  it('should use default value', () => {
+    const envVars1 = new EnvVars({
+      enumerable: true,
+      currentEnv: 'test',
+      mapObj: {
+        testVar: {
+          whenNodeEnvIs: {
+            anyEnv: {
+              varName: 'TEST_VAR',
+              defaultValue: 'TEST_VAR_DEFAULT_VALUE',
+            },
+          },
+        },
+      },
+    });
+
+    const envVars2 = new EnvVars({
+      enumerable: true,
+      currentEnv: 'test',
+      sources: {
+        fromObject: {
+          TEST_VAR: 'TEST_VAR_VALUE',
+        },
+      },
+      mapObj: {
+        testVar: {
+          whenNodeEnvIs: {
+            anyEnv: {
+              varName: 'TEST_VAR',
+              defaultValue: 'TEST_VAR_DEFAULT_VALUE',
+            },
+          },
+        },
+      },
+    });
+
+    expect(envVars1.testVar).toBe('TEST_VAR_DEFAULT_VALUE');
+    expect(
+      envVars2.testVar,
+      'should ignore default value when varName is defined in sources',
+    ).toBe('TEST_VAR_VALUE');
   });
 });

@@ -10,25 +10,38 @@ export type EnvVarsMapObj = {
     parseAs?: ParseAsString | ParseAsFunction;
 
     /**
-     * an object where the key is the environments name or "anyEnv" and the variable name in the env sources as the value.
-     * anyEnv" serves as a fallback when the current environment isn't specified.
+     * An object mapping environment names (like "development", "production", or any custom string) and/or "anyEnv" (as a fallback) to either:
+     *   - A string representing the variable name in the environment sources
+     *   - Or an object:
+     *       - varName: the variable name in the sources
+     *       - defaultValue: the default value to use if not specified in the sources
+     * "anyEnv" acts as a fallback when the current environment does not match any other key.
+
      * @example
      * {
         // .env
-        Port_Dev=123
-        Port_Prod=456
+        Port_Dev=3000
+        Port_Prod=5000
 
         // index.ts
         whenNodeEnvIs: {
           development: 'Port_Dev',
           production: 'Port_Prod',
-          anyEnv: 'Port_Dev',
+          anyEnv: {
+            varName: 'Port_Dev',
+            defaultValue: '4000',
+          },
         }
       }
      */
     whenNodeEnvIs: {
       // eslint-disable-next-line @typescript-eslint/ban-types
-      [Env in (string & {}) | 'development' | 'production' | 'anyEnv']?: string;
+      [Env in (string & {}) | 'development' | 'production' | 'anyEnv']?:
+      | string
+      | {
+        defaultValue: string;
+        varName: string;
+      };
     };
 
     /**

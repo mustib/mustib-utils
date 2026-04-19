@@ -3,7 +3,7 @@ title: EnvVars
 description: A versatile utility for handling environment variables
 ---
 import { Aside, Code, Steps } from '@astrojs/starlight/components';
-import { TypeSince, Parameters, DescriptionList, Default } from '../../components'
+import { TypeSince, Parameters, DescriptionList, Default, Since } from '../../components'
 import ErrorScope from '../../components/ErrorScope.astro'
 
 <TypeSince type='class' since='1.0.0' />
@@ -47,7 +47,7 @@ The `EnvVars` class makes this code much easier to read and maintain, while also
       }
     });
     ```
-3. `EnvVars` takes care of everything by selecting the appropriate value for the current environment, converting it to the correct type, marking it as dynamic if specified, and handling any errors.<br/>
+3. `EnvVars` takes care of everything by selecting the appropriate value for the current environment, converting it to the correct type, marking it dynamic if specified, and throwing any errors to make sure that your app doesn't run with unexpected behavior.<br/>
 Then you can use the previous `envVars.ts` file in your code as follows:<br/>
     ```ts
     import { envVars } from './envVars';
@@ -87,11 +87,13 @@ export const envVars = new EnvVars({
       parseAs: 'number',
       whenNodeEnvIs: {
           anyEnv: 'PORT',
-      }},
+      }
+    },
     host: {
       whenNodeEnvIs: {
           anyEnv: 'HOST',
-      }},
+      }
+    },
     secretValues: {
       parseAs(data) {
         return data.varValueForCurrentEnv.split(',')
@@ -99,7 +101,15 @@ export const envVars = new EnvVars({
       whenNodeEnvIs: {
         anyEnv: 'SECRET_VALUES',
       }
-    }
+    },
+    varWithDefaultValue: {
+      whenNodeEnvIs: {
+          anyEnv: {
+            varName: 'VAR_NAME_WITH_DEFAULT_VALUE',
+            defaultValue: 'any_string'
+          },
+      }
+    },
   }
 })
 ```
@@ -179,10 +189,15 @@ type EnvVars = new (options: ConstructorParams<EnvVarsMapObj>): EnvVars
 type EnvVarsMapObj = {
   [varName: string]: {
     parseAs?: ParseAsString | ParseAsFunction
-    whenNodeEnvIs: {
-      [envName: string | 'anyEnv']: string
-    }
     useDynamicValue?: boolean
+    whenNodeEnvIs: {
+      [Env in (string & {}) | 'development' | 'production' | 'anyEnv']?:
+      | string
+      | {
+        defaultValue: string;
+        varName: string;
+      };
+    };
   }
 }
 ```
@@ -226,10 +241,10 @@ An object that represents a source of environment variables with the following p
 - The first source from the combined array that has the current variable name for the current environment will be passed to the `parseAsFunction` as `assignedSource` and the variable name will be passed as `varNameForCurrentEnv` and it's value will be passed as `varValueForCurrentEnv`.
 
 - An error will be thrown if:
-1. `fromFile` is not a valid string, cannot be read as a file, or contains an empty variable name.
-2. `fromObject` is not a valid object.
-3. `fromDynamicFunction` is not a valid function or returns a non-object value.
-4. Any variable value is not a string.
+  - `fromFile` is not a valid string, cannot be read as a file, or contains an empty variable name.
+  - `fromObject` is not a valid object.
+  - `fromDynamicFunction` is not a valid function or returns a non-object value.
+  - Any variable value is not a string.
 </Aside>
 
 
@@ -270,10 +285,43 @@ It will be called with a `data` object with the following properties:
 
 ## whenNodeEnvIs
 ```ts
-type WhenNodeEnvIs = Record<string | 'anyEnv', string>
+type whenNodeEnvIs: {
+  [Env in (string & {}) | 'development' | 'production' | 'anyEnv']?:
+  | string
+  | {
+    defaultValue: string;
+    varName: string;
+  };
+};
 ```
-An object where the keys are possible environment names and the values are any valid key from combined [sources](#constructor-sources) object passed to the `EnvVars` constructor.
 
-For example, if the environment is `production`, the value of the key `production` will be used. If the environment is `development`, the value of the key `development` will be used, and so on. If sources has `PORT` and `HOST` as variables, then possible values for the `whenNodeEnvIs` object are `PORT` and `HOST`.
+An object mapping environment names (like `development`, `production`, or any custom string) and/or `anyEnv` (as a fallback) to either:
+  - A string representing the variable name in the combined [sources](#constructor-sources)
+      
+  - Or an object: <Since since="2.11.0"/>
+      - `varName`: the variable name in the combined [sources](#constructor-sources)
+      - `defaultValue`: the default value to use if not specified in the combined [sources](#constructor-sources)
 
-The special key `anyEnv` can be used to specify a fallback value for any environment. This is useful when you want to provide a default value for an environment variable that is not defined in the current environment.
+`anyEnv` acts as a fallback when the current environment does not match any other key.
+
+<Aside title="Examples">
+- ```ts
+    {
+      whenNodeEnvIs: {
+        anyEnv: 'VARIABLE_NAME'
+      }
+    }
+    ```
+- ```ts
+    {
+      whenNodeEnvIs: {
+        anyEnv: {
+          varName: 'VARIABLE_NAME',
+          defaultValue: 'VARIABLE_NAME_default_value'
+        }
+      }
+    }
+    ```
+
+
+</Aside>
