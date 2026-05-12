@@ -16,9 +16,13 @@ export default defineConfig({
       editLink: {
         baseUrl: 'https://github.com/mustib/mustib-utils/edit/main/docs',
       },
-      social: {
-        github: 'https://github.com/mustib/mustib-utils',
-      },
+      social: [
+        {
+          icon: 'github',
+          label: 'Github',
+          href: 'https://github.com/mustib/mustib-utils',
+        },
+      ],
       expressiveCode: {
         defaultProps: { wrap: true },
       },
@@ -28,11 +32,11 @@ export default defineConfig({
         },
         {
           label: 'Utilities',
-          autogenerate: { directory: 'v2/utilities' },
+          items: [{ autogenerate: { directory: 'v2/utilities' } }],
         },
         {
           label: 'Constants',
-          autogenerate: { directory: 'v2/constants' },
+          items: [{ autogenerate: { directory: 'v2/constants' } }],
         },
       ],
     }),
